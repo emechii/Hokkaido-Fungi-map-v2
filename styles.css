@@ -1,0 +1,212 @@
+:root {
+  --bg: #040806;
+  --panel: #08110c;
+  --line: #1f7a3f;
+  --line-soft: #184f2e;
+  --text: #d3eadb;
+  --muted: #8eac98;
+  --accent: #4dc678;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Noto Sans JP", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.site-header {
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+  padding: 1.2rem 1rem;
+}
+
+.site-header h1 {
+  margin: 0;
+  letter-spacing: 0.08em;
+}
+
+.subtitle {
+  margin-top: 0.3rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 16px;
+  padding: 16px;
+  min-height: calc(100vh - 170px);
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0;
+}
+
+.sidebar {
+  padding: 14px;
+  overflow: auto;
+  max-height: calc(100vh - 220px);
+}
+
+.toggle-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.second-row {
+  margin-bottom: 14px;
+}
+
+.toggle-button,
+.home-button {
+  background: #0b1a12;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+}
+
+.toggle-button.active {
+  background: #12311f;
+  color: var(--accent);
+  border-color: #2ea156;
+}
+
+.species-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: calc(100vh - 350px);
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.list-item,
+.genus-heading {
+  border: none;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  padding: 2px 0;
+  cursor: pointer;
+  line-height: 1.35;
+  border-radius: 0;
+}
+
+.genus-heading {
+  color: #9bd5b1;
+  margin-top: 8px;
+  cursor: default;
+}
+
+.list-item small {
+  display: block;
+  color: var(--muted);
+}
+
+.list-item.selected {
+  color: var(--accent);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status {
+  padding: 0.8rem;
+  color: var(--muted);
+}
+
+.detail {
+  padding: 1rem;
+}
+
+.hidden {
+  display: none;
+}
+
+.sci-name {
+  margin-top: -6px;
+  color: #93c8a7;
+  font-style: italic;
+}
+
+.photo-grid {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.photo-grid img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border: 1px solid var(--line-soft);
+}
+
+.meta-grid {
+  margin: 14px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+}
+
+.meta-grid div {
+  border: 1px solid var(--line-soft);
+  padding: 8px;
+}
+
+
+.distribution-summary {
+  margin: 4px 0 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.map-wrap {
+  border: 1px solid var(--line-soft);
+  padding: 8px;
+}
+
+#hokkaidoMap {
+  width: 100%;
+  height: auto;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 20px;
+}
+
+.home-button {
+  min-width: 160px;
+  color: var(--accent);
+}
+
+@media (max-width: 1000px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    max-height: none;
+  }
+
+  .species-list {
+    max-height: 320px;
+  }
+}
