@@ -217,6 +217,11 @@ body {
   object-position: center;
 }
 
+
+.thumb-clickable {
+  cursor: pointer;
+}
+
 .photo-source {
   position: absolute;
   left: 0;

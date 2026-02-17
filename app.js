@@ -372,7 +372,7 @@ async function selectTaxon(taxon) {
     return;
   }
 
-  setStatus(`${observations.length}件の観察記録`);
+  setStatus("観察写真と分布を表示しています。");
 }
 
 function renderPhotos(taxon, observations) {
@@ -397,22 +397,38 @@ function renderPhotos(taxon, observations) {
     return;
   }
 
-  const [featuredItem, ...restItems] = photoItems;
-  dom.photoGrid.appendChild(createPhotoCard(featuredItem, true));
+  const ordered = [...photoItems];
 
-  const thumbItems = restItems.slice(0, THUMBNAIL_LIMIT);
-  if (thumbItems.length > 0) {
-    const thumbGrid = document.createElement("div");
-    thumbGrid.className = "photo-thumbs";
+  const renderPhotoStack = () => {
+    dom.photoGrid.innerHTML = "";
 
-    for (const item of thumbItems) {
-      thumbGrid.appendChild(createPhotoCard(item, false));
+    const [featuredItem, ...restItems] = ordered;
+    dom.photoGrid.appendChild(createPhotoCard(featuredItem, true));
+
+    const thumbItems = restItems.slice(0, THUMBNAIL_LIMIT);
+    if (thumbItems.length > 0) {
+      const thumbGrid = document.createElement("div");
+      thumbGrid.className = "photo-thumbs";
+
+      for (const item of thumbItems) {
+        const thumbCard = createPhotoCard(item, false, () => {
+          const idx = ordered.indexOf(item);
+          if (idx > 0) {
+            const [picked] = ordered.splice(idx, 1);
+            ordered.unshift(picked);
+            renderPhotoStack();
+          }
+        });
+        thumbGrid.appendChild(thumbCard);
+      }
+
+      dom.photoGrid.appendChild(thumbGrid);
     }
+  };
 
-    dom.photoGrid.appendChild(thumbGrid);
-  }
+  renderPhotoStack();
 
-  const displayedCount = FEATURED_PHOTO_COUNT + thumbItems.length;
+  const displayedCount = Math.min(photoItems.length, FEATURED_PHOTO_COUNT + THUMBNAIL_LIMIT);
   const totalObs = Number(taxon?.count || observations.length || 0);
   if (totalObs > displayedCount || observations.length > displayedCount) {
     const observationsUrl = new URL("https://www.inaturalist.org/observations");
@@ -424,21 +440,20 @@ function renderPhotos(taxon, observations) {
   }
 }
 
-function createPhotoCard(item, isFeatured) {
+function createPhotoCard(item, isFeatured, onThumbClick = null) {
   const card = document.createElement("div");
   card.className = isFeatured ? "photo-card featured-card" : "photo-card thumb-card";
-
-  const imageLink = document.createElement("a");
-  imageLink.href = item.obsUrl;
-  imageLink.target = "_blank";
-  imageLink.rel = "noopener noreferrer";
 
   const img = document.createElement("img");
   img.src = item.imageUrl;
   img.alt = "iNaturalist observation photo";
   img.loading = isFeatured ? "eager" : "lazy";
   img.className = isFeatured ? "featured-photo" : "thumb-photo";
-  imageLink.appendChild(img);
+
+  if (!isFeatured && typeof onThumbClick === "function") {
+    img.classList.add("thumb-clickable");
+    img.addEventListener("click", onThumbClick);
+  }
 
   const source = document.createElement("a");
   source.className = "photo-source";
@@ -447,7 +462,7 @@ function createPhotoCard(item, isFeatured) {
   source.rel = "noopener noreferrer";
   source.textContent = `by ${item.userName}`;
 
-  card.appendChild(imageLink);
+  card.appendChild(img);
   card.appendChild(source);
   return card;
 }
