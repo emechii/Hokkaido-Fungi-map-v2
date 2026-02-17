@@ -298,18 +298,35 @@ function groupByGojuon(name) {
   const first = toHiragana((name || "").trim().charAt(0));
   if (!first) return "その他";
 
-  if ("ぁあぃいぅうぇえぉお".includes(first)) return "あ";
-  if ("かがきぎくぐけげこご".includes(first)) return "か";
-  if ("さざしじすずせぜそぞ".includes(first)) return "さ";
-  if ("ただちぢっつづてでとど".includes(first)) return "た";
-  if ("なにぬねの".includes(first)) return "な";
-  if ("はばぱひびぴふぶぷへべぺほぼぽ".includes(first)) return "は";
-  if ("まみむめも".includes(first)) return "ま";
-  if ("ゃやゅゆょよ".includes(first)) return "や";
-  if ("らりるれろ".includes(first)) return "ら";
-  if ("ゎわゐゑをん".includes(first)) return "わ/ん";
+  const normalized = normalizeToGojuonKana(first);
+  return GOJUON_ORDER.includes(normalized) ? normalized : "その他";
+}
 
-  return "その他";
+const GOJUON_ORDER = [
+  "あ", "い", "う", "え", "お",
+  "か", "き", "く", "け", "こ",
+  "さ", "し", "す", "せ", "そ",
+  "た", "ち", "つ", "て", "と",
+  "な", "に", "ぬ", "ね", "の",
+  "は", "ひ", "ふ", "へ", "ほ",
+  "ま", "み", "む", "め", "も",
+  "や", "ゆ", "よ",
+  "ら", "り", "る", "れ", "ろ",
+  "わ", "を", "ん",
+];
+
+const GOJUON_NORMALIZE_MAP = {
+  "ぁ": "あ", "ぃ": "い", "ぅ": "う", "ぇ": "え", "ぉ": "お",
+  "が": "か", "ぎ": "き", "ぐ": "く", "げ": "け", "ご": "こ",
+  "ざ": "さ", "じ": "し", "ず": "す", "ぜ": "せ", "ぞ": "そ",
+  "だ": "た", "ぢ": "ち", "づ": "つ", "で": "て", "ど": "と",
+  "ば": "は", "び": "ひ", "ぶ": "ふ", "べ": "へ", "ぼ": "ほ",
+  "ぱ": "は", "ぴ": "ひ", "ぷ": "ふ", "ぺ": "へ", "ぽ": "ほ",
+  "ゃ": "や", "ゅ": "ゆ", "ょ": "よ", "ゎ": "わ", "ゔ": "う",
+};
+
+function normalizeToGojuonKana(char) {
+  return GOJUON_NORMALIZE_MAP[char] || char;
 }
 
 function toHiragana(text) {
