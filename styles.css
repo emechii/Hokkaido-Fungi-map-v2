@@ -60,8 +60,24 @@ body {
 
 .sidebar {
   padding: 14px;
-  overflow: visible;
-  max-height: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.sidebar-top {
+  flex: 0 0 auto;
+}
+
+.sidebar-list-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#listTitle {
+  margin: 0 0 6px;
 }
 
 .toggle-row {
@@ -94,9 +110,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  max-height: none;
-  overflow: visible;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
   padding-right: 6px;
+  overscroll-behavior: contain;
 }
 
 .list-item,
@@ -256,10 +274,10 @@ body {
   height: auto;
 }
 
-.footer {
+.sidebar-footer {
+  margin-top: 12px;
   display: flex;
   justify-content: center;
-  padding: 6px 0 20px;
 }
 
 .home-button {
@@ -273,11 +291,11 @@ body {
   }
 
   .sidebar {
-    max-height: none;
+    min-height: auto;
   }
 
   .species-list {
-    max-height: none;
+    max-height: 55vh;
   }
 
   .photo-thumbs {

@@ -14,7 +14,7 @@
 
     <main class="layout">
       <aside class="sidebar panel">
-        <section>
+        <section class="sidebar-top">
           <h2 class="list-heading">種名リスト</h2>
           <div class="toggle-row">
             <button id="jpSortBtn" class="toggle-button active">和名</button>
@@ -22,10 +22,14 @@
           </div>
         </section>
 
-        <section>
+        <section class="sidebar-list-section">
           <h2 id="listTitle">和名(五十音)</h2>
           <div id="speciesList" class="species-list" aria-live="polite"></div>
         </section>
+
+        <div class="sidebar-footer">
+          <button id="homeBtn" class="home-button">ホームへ戻る</button>
+        </div>
       </aside>
 
       <section class="content">
@@ -77,9 +81,6 @@
       </section>
     </main>
 
-    <footer class="footer">
-      <button id="homeBtn" class="home-button">ホームへ戻る</button>
-    </footer>
 
     <script src="app.js" type="module"></script>
   </body>
