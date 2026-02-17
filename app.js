@@ -342,10 +342,15 @@ function createListButton(taxon) {
   const primary = inJpMode ? taxon.japaneseName : taxon.name;
   const secondary = inJpMode ? taxon.name : taxon.japaneseName;
 
-  button.textContent = primary;
+  const primaryEl = document.createElement("span");
+  primaryEl.className = `primary-name${inJpMode ? "" : " scientific-text"}`;
+  primaryEl.textContent = primary;
 
   const sub = document.createElement("small");
+  sub.className = inJpMode ? "scientific-text" : "";
   sub.textContent = secondary;
+
+  button.appendChild(primaryEl);
   button.appendChild(sub);
 
   if (state.selectedTaxonId === taxon.id) {
@@ -367,8 +372,9 @@ async function selectTaxon(taxon) {
   renderSpeciesList();
 
   dom.detailCard.classList.remove("hidden");
-  dom.detailJaName.textContent = taxon.japaneseName;
   dom.detailSciName.textContent = taxon.name;
+  dom.detailJaName.textContent = taxon.japaneseName === "和名なし" ? "" : taxon.japaneseName;
+  window.scrollTo({ top: 0, behavior: "smooth" });
   dom.metaGenus.textContent = extractGenus(taxon.name);
   dom.metaFamily.textContent = await familyNameFromTaxon(taxon.id);
   dom.metaObsCount.textContent = String(taxon.count || "-");
@@ -389,7 +395,6 @@ async function selectTaxon(taxon) {
     return;
   }
 
-  setStatus("観察写真と分布を表示しています。");
 }
 
 function renderPhotos(taxon, observations) {
@@ -828,8 +833,8 @@ async function familyNameFromTaxon(taxonId) {
 }
 
 function japaneseNameOrFallback(name) {
-  if (!name) return "和名未登録";
-  return isLikelyJapanese(name) ? name : "和名未登録";
+  if (!name) return "和名なし";
+  return isLikelyJapanese(name) ? name : "和名なし";
 }
 
 function isLikelyJapanese(text) {

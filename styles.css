@@ -140,6 +140,10 @@ body {
   cursor: default;
 }
 
+.primary-name {
+  display: block;
+}
+
 .list-item small {
   display: block;
   color: var(--muted);
@@ -171,8 +175,21 @@ body {
 }
 
 .sci-name {
-  margin-top: -6px;
+  margin: 0;
+  color: #c8f2d9;
+  font-style: italic;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.ja-name {
+  margin-top: 6px;
   color: #93c8a7;
+}
+
+.scientific-text {
+  font-family: "Times New Roman", Times, serif;
   font-style: italic;
 }
 
@@ -243,6 +260,8 @@ body {
 
 .obs-link-wrap {
   margin-top: 8px;
+  display: flex;
+  justify-content: center;
 }
 
 .obs-link-button {
