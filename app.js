@@ -13,6 +13,21 @@ const MAX_OBS_PAGES = 3;
 const DEFAULT_BOUNDS = { minLon: 139.2, maxLon: 146.4, minLat: 41.2, maxLat: 45.9 };
 const MAP_CANVAS = { x: 20, y: 20, width: 560, height: 320 };
 
+const EMBEDDED_LOCAL_SPECIES = [
+  { id: 47170, name: "Amanita muscaria", preferred_common_name: "ベニテングタケ", count: 12 },
+  { id: 121883, name: "Amanita vaginata", preferred_common_name: "ツルタケ", count: 7 },
+  { id: 48731, name: "Boletus edulis", preferred_common_name: "ヤマドリタケ", count: 8 },
+  { id: 118260, name: "Cantharellus cibarius", preferred_common_name: "アンズタケ", count: 10 },
+  { id: 55601, name: "Coprinopsis atramentaria", preferred_common_name: "ヒトヨタケ", count: 6 },
+  { id: 48496, name: "Flammulina velutipes", preferred_common_name: "エノキタケ", count: 14 },
+  { id: 56813, name: "Hericium erinaceus", preferred_common_name: "ヤマブシタケ", count: 5 },
+  { id: 48702, name: "Hypsizygus marmoreus", preferred_common_name: "ブナシメジ", count: 9 },
+  { id: 55582, name: "Laccaria amethystina", preferred_common_name: "ムラサキアブラシメジモドキ", count: 4 },
+  { id: 49546, name: "Lentinula edodes", preferred_common_name: "シイタケ", count: 8 },
+  { id: 124057, name: "Pleurotus ostreatus", preferred_common_name: "ヒラタケ", count: 6 },
+  { id: 55693, name: "Trametes versicolor", preferred_common_name: "カワラタケ", count: 7 },
+];
+
 const state = {
   projectId: null,
   species: [],
@@ -49,6 +64,13 @@ initialize().catch((error) => {
 
 async function initialize() {
   wireEvents();
+
+  // プレビュー（file://）でも最低限一覧が見えるよう、埋め込み種データを先に描画。
+  state.species = normalizeSpeciesArray(EMBEDDED_LOCAL_SPECIES);
+  if (state.species.length > 0) {
+    renderSpeciesList();
+    setStatus(`埋め込みデータから ${state.species.length} 種を表示中...`);
+  }
 
   let loadedFromDb = false;
   const dbSpecies = await loadSpeciesFromIndexedDB();
@@ -111,7 +133,7 @@ async function loadLocalSpecies() {
     return species;
   } catch (error) {
     console.warn("local-species.json の読込に失敗", error);
-    return [];
+    return normalizeSpeciesArray(EMBEDDED_LOCAL_SPECIES);
   }
 }
 
