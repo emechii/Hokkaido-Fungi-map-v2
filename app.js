@@ -62,9 +62,9 @@ const state = {
 };
 
 const dom = {
-  statusBar: document.getElementById("statusBar"),
   speciesList: document.getElementById("speciesList"),
   listTitle: document.getElementById("listTitle"),
+  speciesCount: document.getElementById("speciesCount"),
   detailCard: document.getElementById("detailCard"),
   detailJaName: document.getElementById("detailJaName"),
   detailSciName: document.getElementById("detailSciName"),
@@ -80,6 +80,7 @@ const dom = {
   scientificModeBtn: document.getElementById("scientificSortBtn"),
   homeBtn: document.getElementById("homeBtn"),
   obsLinkBtn: document.getElementById("obsLinkBtn"),
+  seasonalityChart: document.getElementById("seasonalityChart"),
 };
 
 initialize().catch((error) => {
@@ -288,6 +289,7 @@ function renderSpeciesList() {
 
   const inJpMode = state.currentMode === "jp";
   dom.listTitle.textContent = inJpMode ? "和名(五十音)" : "学名(A~Z)";
+  updateSpeciesCount();
 
   const sorted = [...state.species].sort((a, b) => {
     if (inJpMode) {
@@ -382,16 +384,16 @@ async function selectTaxon(taxon) {
   dom.photoGrid.innerHTML = "<p>観察記録を読み込み中...</p>";
   dom.distributionSummary.textContent = "分布ポイントを読み込み中...";
   dom.distributionLayer.innerHTML = "";
-
-  setStatus(`「${taxon.japaneseName}」の観察記録を取得しています...`);
+  renderSeasonality(Array(12).fill(0));
 
   const observations = state.projectId ? await fetchObservationsForTaxon(taxon.id) : [];
   renderPhotos(taxon, observations);
   renderDistribution(observations);
+  const monthlyCounts = state.projectId ? await fetchMonthlySeasonality(taxon.id) : countsFromObservations(observations);
+  renderSeasonality(monthlyCounts);
 
   if (!state.projectId) {
     dom.distributionSummary.textContent = "ローカル表示中のため分布ポイント取得はスキップしました。";
-    setStatus("ローカル種名一覧を表示中です。ネットワーク復帰後に観察データを取得します。");
     return;
   }
 
@@ -736,6 +738,75 @@ function projectLonLatToMap(lon, lat, projection) {
   return { x, y };
 }
 
+
+function updateSpeciesCount() {
+  if (!dom.speciesCount) return;
+  dom.speciesCount.textContent = `${state.species.length}種`;
+}
+
+function countsFromObservations(observations) {
+  const counts = Array(12).fill(0);
+  for (const obs of observations) {
+    const month = obs?.observed_on_details?.month;
+    if (Number.isInteger(month) && month >= 1 && month <= 12) counts[month - 1] += 1;
+  }
+  return counts;
+}
+
+function renderSeasonality(counts) {
+  if (!dom.seasonalityChart) return;
+  const data = Array.from({ length: 12 }, (_, i) => Number(counts?.[i] || 0));
+  const max = Math.max(1, ...data);
+  const w = 640;
+  const h = 220;
+  const padL = 40;
+  const padR = 16;
+  const padT = 14;
+  const padB = 30;
+  const gw = w - padL - padR;
+  const gh = h - padT - padB;
+
+  const points = data.map((v, i) => {
+    const x = padL + (gw * i) / 11;
+    const y = padT + gh - (gh * v) / max;
+    return { x, y, v };
+  });
+
+  const area = [`M ${padL} ${padT + gh}`, ...points.map((p) => `L ${p.x.toFixed(2)} ${p.y.toFixed(2)}`), `L ${padL + gw} ${padT + gh}`, 'Z'].join(' ');
+  const line = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
+
+  dom.seasonalityChart.innerHTML = `
+    <rect x="0" y="0" width="${w}" height="${h}" fill="#08110c" stroke="#1f7a3f" />
+    <path d="${area}" fill="#b8cf9a" fill-opacity="0.25"></path>
+    <path d="${line}" fill="none" stroke="#78b100" stroke-width="3"></path>
+    ${points.map((p) => `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="3.5" fill="#78b100"></circle>`).join('')}
+    ${Array.from({ length: 12 }, (_, i) => `<text x="${(padL + (gw * i) / 11).toFixed(2)}" y="${h - 8}" fill="#8eac98" font-size="12" text-anchor="middle">${i + 1}月</text>`).join('')}
+  `;
+}
+
+async function fetchMonthlySeasonality(taxonId) {
+  try {
+    const url = new URL(`${API_BASE}/observations/histogram`);
+    url.searchParams.set("project_id", String(state.projectId));
+    url.searchParams.set("taxon_id", String(taxonId));
+    url.searchParams.set("interval", "month_of_year");
+    url.searchParams.set("locale", "ja");
+
+    const response = await fetchWithTimeout(url, {}, 10000);
+    if (!response.ok) return Array(12).fill(0);
+    const data = await response.json();
+    const counts = Array(12).fill(0);
+    const byMonth = data?.results?.month_of_year || data?.results || {};
+    for (let m = 1; m <= 12; m += 1) {
+      counts[m - 1] = Number(byMonth?.[String(m)] || 0);
+    }
+    return counts;
+  } catch (error) {
+    console.warn("季節性データの取得に失敗", error);
+    return Array(12).fill(0);
+  }
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -846,5 +917,6 @@ function extractGenus(scientificName) {
 }
 
 function setStatus(message) {
+  if (!dom.statusBar) return;
   dom.statusBar.textContent = message;
 }

@@ -42,6 +42,15 @@ body {
   font-size: 0.9rem;
   color: var(--muted);
   letter-spacing: 0.04em;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.species-count {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 400;
 }
 
 .layout {
@@ -272,6 +281,20 @@ body {
   border: 1px solid var(--line);
   text-decoration: none;
   background: #0b1a12;
+}
+
+.seasonality-section {
+  margin-top: 8px;
+}
+
+.seasonality-wrap {
+  border: 1px solid var(--line-soft);
+  padding: 8px;
+}
+
+#seasonalityChart {
+  width: 100%;
+  height: auto;
 }
 
 .meta-grid {

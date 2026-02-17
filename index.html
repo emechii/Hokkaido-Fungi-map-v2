@@ -15,7 +15,7 @@
     <main class="layout">
       <aside class="sidebar panel">
         <section class="sidebar-top">
-          <h2 class="list-heading">種名リスト</h2>
+          <h2 class="list-heading">種名リスト <small id="speciesCount" class="species-count">-種</small></h2>
           <div class="toggle-row">
             <button id="jpSortBtn" class="toggle-button active">和名</button>
             <button id="scientificSortBtn" class="toggle-button">学名</button>
@@ -30,8 +30,6 @@
       </aside>
 
       <section class="content">
-        <div id="statusBar" class="panel status">読み込み中...</div>
-
         <article id="detailCard" class="panel detail hidden" aria-live="polite">
           <h2 id="detailSciName" class="sci-name">-</h2>
           <p id="detailJaName" class="ja-name">-</p>
@@ -43,6 +41,13 @@
             </div>
           </section>
 
+          <section class="seasonality-section">
+            <h3>種の季節性</h3>
+            <div class="seasonality-wrap">
+              <svg id="seasonalityChart" viewBox="0 0 640 220" role="img" aria-label="種の季節性グラフ"></svg>
+            </div>
+          </section>
+
           <section class="meta-grid">
             <div><span>属:</span> <strong id="metaGenus">-</strong></div>
             <div><span>科:</span> <strong id="metaFamily">-</strong></div>
@@ -51,7 +56,7 @@
           </section>
 
           <section>
-            <h3>道内の分布図</h3>
+            <h3>道内分布図</h3>
             <p id="distributionSummary" class="distribution-summary">分布ポイントを読み込み中...</p>
             <div class="map-wrap">
               <svg id="hokkaidoMap" viewBox="0 0 600 380" role="img" aria-label="北海道分布マップ">
