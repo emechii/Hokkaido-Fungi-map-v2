@@ -65,6 +65,7 @@ const dom = {
   speciesList: document.getElementById("speciesList"),
   listTitle: document.getElementById("listTitle"),
   speciesCount: document.getElementById("speciesCount"),
+  content: document.querySelector(".content"),
   detailCard: document.getElementById("detailCard"),
   detailJaName: document.getElementById("detailJaName"),
   detailSciName: document.getElementById("detailSciName"),
@@ -377,6 +378,7 @@ async function selectTaxon(taxon) {
   dom.detailSciName.textContent = taxon.name;
   dom.detailJaName.textContent = taxon.japaneseName === "和名なし" ? "" : taxon.japaneseName;
   window.scrollTo({ top: 0, behavior: "smooth" });
+  if (dom.content) dom.content.scrollTo({ top: 0, behavior: "smooth" });
   dom.metaGenus.textContent = extractGenus(taxon.name);
   dom.metaFamily.textContent = await familyNameFromTaxon(taxon.id);
   dom.metaObsCount.textContent = String(taxon.count || "-");
@@ -770,9 +772,9 @@ function renderSeasonality(counts) {
   if (!dom.seasonalityChart) return;
 
   const data = Array.from({ length: 12 }, (_, i) => Number(counts?.[i] || 0));
-  const maxValue = Math.max(1, ...data);
-  const step = maxValue <= 30 ? 5 : maxValue <= 80 ? 10 : 20;
-  const maxRounded = Math.ceil(maxValue / step) * step;
+  const maxValue = Math.max(0, ...data);
+  const step = maxValue <= 10 ? 1 : maxValue >= 50 ? 10 : maxValue >= 20 ? 5 : 2;
+  const maxRounded = Math.max(step, Math.ceil(maxValue / step) * step);
 
   const w = 640;
   const h = 220;
@@ -789,7 +791,7 @@ function renderSeasonality(counts) {
     return { x, y, v };
   });
 
-  const line = buildSmoothCurvePath(points);
+  const line = buildSmoothCurvePath(points, padT, padT + gh);
   const area = `${line} L ${(padL + gw).toFixed(2)} ${(padT + gh).toFixed(2)} L ${padL.toFixed(2)} ${(padT + gh).toFixed(2)} Z`;
 
   const gridLines = [];
@@ -810,7 +812,11 @@ function renderSeasonality(counts) {
   `;
 }
 
-function buildSmoothCurvePath(points) {
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function buildSmoothCurvePath(points, minY, maxY) {
   if (!points || points.length === 0) return "";
   if (points.length === 1) return `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
 
@@ -822,9 +828,9 @@ function buildSmoothCurvePath(points) {
     const p3 = points[i + 2] || p2;
 
     const cp1x = p1.x + (p2.x - p0.x) / 6;
-    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp1y = clamp(p1.y + (p2.y - p0.y) / 6, minY, maxY);
     const cp2x = p2.x - (p3.x - p1.x) / 6;
-    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    const cp2y = clamp(p2.y - (p3.y - p1.y) / 6, minY, maxY);
 
     d += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
   }
