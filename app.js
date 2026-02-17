@@ -1,5 +1,7 @@
 const API_BASE = "https://api.inaturalist.org/v1";
 const PROJECT_SLUG = "fungi-of-hokkaido";
+const LOCAL_SPECIES_PATH = "./local-species.json";
+const LOCAL_CACHE_KEY = "hokkaido-fungi-species-cache-v1";
 const SPECIES_PER_PAGE = 200;
 const PHOTO_LIMIT = 12;
 const OBS_PER_PAGE = 200;
@@ -45,11 +47,31 @@ initialize().catch((error) => {
 async function initialize() {
   wireEvents();
 
-  setStatus("iNaturalist プロジェクト情報を取得しています...");
-  state.projectId = await fetchProjectIdBySlug(PROJECT_SLUG);
+  const localSpecies = await loadLocalSpecies();
+  if (localSpecies.length > 0) {
+    state.species = localSpecies;
+    renderSpeciesList();
+    setStatus(`ローカル保存済みの ${localSpecies.length} 種を表示中。最新データを確認します...`);
+  }
 
-  setStatus("北海道の菌類種一覧を取得しています...");
-  state.species = await fetchAllSpecies(state.projectId);
+  try {
+    setStatus("iNaturalist プロジェクト情報を取得しています...");
+    state.projectId = await fetchProjectIdBySlug(PROJECT_SLUG);
+
+    setStatus("北海道の菌類種一覧を取得しています...");
+    const remoteSpecies = await fetchAllSpecies(state.projectId);
+    if (remoteSpecies.length > 0) {
+      state.species = remoteSpecies;
+      saveSpeciesCache(remoteSpecies);
+    }
+  } catch (error) {
+    console.warn("オンライン取得に失敗したためローカル一覧を使用します", error);
+  }
+
+  if (state.species.length === 0) {
+    setStatus("一覧を取得できませんでした。ローカル種名データを確認してください。");
+    return;
+  }
 
   setStatus("北海道境界データを取得しています...");
   await loadHokkaidoOutlineFromINat();
@@ -57,6 +79,52 @@ async function initialize() {
   updateToggleState();
   renderSpeciesList();
   setStatus(`${state.species.length}種を取得しました。左側の一覧から選択してください。`);
+}
+
+async function loadLocalSpecies() {
+  const cached = loadSpeciesCache();
+  if (cached.length > 0) return cached;
+
+  try {
+    const response = await fetchWithTimeout(LOCAL_SPECIES_PATH, {}, 3000);
+    if (!response.ok) return [];
+    const data = await response.json();
+    const species = normalizeSpeciesArray(data?.species || []);
+    if (species.length > 0) saveSpeciesCache(species);
+    return species;
+  } catch (error) {
+    console.warn("local-species.json の読込に失敗", error);
+    return [];
+  }
+}
+
+function loadSpeciesCache() {
+  try {
+    const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return normalizeSpeciesArray(parsed?.species || []);
+  } catch {
+    return [];
+  }
+}
+
+function saveSpeciesCache(species) {
+  try {
+    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), species }));
+  } catch {
+    // ignore
+  }
+}
+
+function normalizeSpeciesArray(arr) {
+  return arr
+    .filter((taxon) => taxon?.id && taxon?.name)
+    .map((taxon) => ({
+      ...taxon,
+      japaneseName: japaneseNameOrFallback(taxon.preferred_common_name),
+      count: taxon.count || 0,
+    }));
 }
 
 function wireEvents() {
@@ -154,9 +222,16 @@ async function selectTaxon(taxon) {
 
   setStatus(`「${taxon.japaneseName}」の観察記録を取得しています...`);
 
-  const observations = await fetchObservationsForTaxon(taxon.id);
+  const observations = state.projectId ? await fetchObservationsForTaxon(taxon.id) : [];
   renderPhotos(observations);
   renderDistribution(observations);
+
+  if (!state.projectId) {
+    dom.distributionSummary.textContent = "ローカル表示中のため分布ポイント取得はスキップしました。";
+    setStatus("ローカル種名一覧を表示中です。ネットワーク復帰後に観察データを取得します。");
+    return;
+  }
+
   setStatus(`観察記録 ${observations.length} 件を表示しています。`);
 }
 
@@ -169,7 +244,7 @@ function renderPhotos(observations) {
     .slice(0, PHOTO_LIMIT);
 
   if (photoUrls.length === 0) {
-    dom.photoGrid.innerHTML = "<p>写真付き観察が見つかりませんでした。</p>";
+    dom.photoGrid.innerHTML = "<p>写真付き観察が見つかりませんでした（ローカル表示モード）。</p>";
     return;
   }
 
@@ -267,7 +342,7 @@ async function fetchHokkaidoGeometryFromINat() {
     autocompleteUrl.searchParams.set("q", query);
     autocompleteUrl.searchParams.set("locale", "ja");
 
-    const autocompleteRes = await fetch(autocompleteUrl);
+    const autocompleteRes = await fetchWithTimeout(autocompleteUrl, {}, 8000);
     if (!autocompleteRes.ok) continue;
 
     const autocompleteData = await autocompleteRes.json();
@@ -284,7 +359,7 @@ async function fetchHokkaidoGeometryFromINat() {
   const placeUrl = new URL(`${API_BASE}/places/${preferred.id}`);
   placeUrl.searchParams.set("locale", "ja");
 
-  const placeRes = await fetch(placeUrl);
+  const placeRes = await fetchWithTimeout(placeUrl, {}, 8000);
   if (!placeRes.ok) return null;
 
   const placeData = await placeRes.json();
@@ -429,11 +504,21 @@ function projectLonLatToMap(lon, lat, projection) {
   return { x, y };
 }
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function fetchProjectIdBySlug(slug) {
   const url = new URL(`${API_BASE}/projects/${slug}`);
   url.searchParams.set("locale", "ja");
 
-  const response = await fetch(url);
+  const response = await fetchWithTimeout(url, {}, 10000);
   if (!response.ok) throw new Error("Failed to fetch project");
 
   const data = await response.json();
@@ -454,13 +539,11 @@ async function fetchAllSpecies(projectId) {
     all.push(...nextPage.results);
   }
 
-  return all
+  const normalized = all
     .map((entry) => ({ ...entry.taxon, count: entry.count }))
-    .filter((taxon) => taxon?.rank === "species")
-    .map((taxon) => ({
-      ...taxon,
-      japaneseName: japaneseNameOrFallback(taxon.preferred_common_name),
-    }));
+    .filter((taxon) => taxon?.rank === "species");
+
+  return normalizeSpeciesArray(normalized);
 }
 
 async function fetchSpeciesPage(projectId, page) {
@@ -471,7 +554,7 @@ async function fetchSpeciesPage(projectId, page) {
   url.searchParams.set("page", String(page));
   url.searchParams.set("locale", "ja");
 
-  const response = await fetch(url);
+  const response = await fetchWithTimeout(url, {}, 12000);
   if (!response.ok) throw new Error(`Failed to fetch species page ${page}`);
 
   return response.json();
@@ -491,7 +574,7 @@ async function fetchObservationsForTaxon(taxonId) {
     url.searchParams.set("order", "desc");
     url.searchParams.set("locale", "ja");
 
-    const response = await fetch(url);
+    const response = await fetchWithTimeout(url, {}, 12000);
     if (!response.ok) throw new Error("Failed to fetch observations");
 
     const data = await response.json();
@@ -508,7 +591,7 @@ async function familyNameFromTaxon(taxonId) {
   const url = new URL(`${API_BASE}/taxa/${taxonId}`);
   url.searchParams.set("locale", "ja");
 
-  const response = await fetch(url);
+  const response = await fetchWithTimeout(url, {}, 10000);
   if (!response.ok) return "-";
 
   const data = await response.json();
