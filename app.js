@@ -2,6 +2,9 @@ const API_BASE = "https://api.inaturalist.org/v1";
 const PROJECT_SLUG = "fungi-of-hokkaido";
 const LOCAL_SPECIES_PATH = "./local-species.json";
 const LOCAL_CACHE_KEY = "hokkaido-fungi-species-cache-v1";
+const SPECIES_DB_NAME = "hokkaido-fungi-db";
+const SPECIES_STORE = "species";
+const SPECIES_DB_VERSION = 1;
 const SPECIES_PER_PAGE = 200;
 const PHOTO_LIMIT = 12;
 const OBS_PER_PAGE = 200;
@@ -47,11 +50,24 @@ initialize().catch((error) => {
 async function initialize() {
   wireEvents();
 
+  let loadedFromDb = false;
+  const dbSpecies = await loadSpeciesFromIndexedDB();
+  if (dbSpecies.length > 0) {
+    state.species = dbSpecies;
+    loadedFromDb = true;
+    renderSpeciesList();
+    setStatus(`ローカルDBから ${dbSpecies.length} 種を表示中。最新データを確認します...`);
+  }
+
   const localSpecies = await loadLocalSpecies();
-  if (localSpecies.length > 0) {
+  if (!loadedFromDb && localSpecies.length > 0) {
     state.species = localSpecies;
     renderSpeciesList();
-    setStatus(`ローカル保存済みの ${localSpecies.length} 種を表示中。最新データを確認します...`);
+    setStatus(`ローカルデータから ${localSpecies.length} 種を表示中。最新データを確認します...`);
+  }
+
+  if (localSpecies.length > 0) {
+    await saveSpeciesToIndexedDB(localSpecies);
   }
 
   try {
@@ -63,6 +79,7 @@ async function initialize() {
     if (remoteSpecies.length > 0) {
       state.species = remoteSpecies;
       saveSpeciesCache(remoteSpecies);
+      await saveSpeciesToIndexedDB(remoteSpecies);
     }
   } catch (error) {
     console.warn("オンライン取得に失敗したためローカル一覧を使用します", error);
@@ -125,6 +142,70 @@ function normalizeSpeciesArray(arr) {
       japaneseName: japaneseNameOrFallback(taxon.preferred_common_name),
       count: taxon.count || 0,
     }));
+}
+
+
+function openSpeciesDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(SPECIES_DB_NAME, SPECIES_DB_VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(SPECIES_STORE)) {
+        const store = db.createObjectStore(SPECIES_STORE, { keyPath: "id" });
+        store.createIndex("name", "name", { unique: false });
+        store.createIndex("preferred_common_name", "preferred_common_name", { unique: false });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function loadSpeciesFromIndexedDB() {
+  if (!window.indexedDB) return [];
+  try {
+    const db = await openSpeciesDb();
+    const species = await new Promise((resolve, reject) => {
+      const tx = db.transaction(SPECIES_STORE, "readonly");
+      const store = tx.objectStore(SPECIES_STORE);
+      const req = store.getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+    db.close();
+    return normalizeSpeciesArray(species);
+  } catch (error) {
+    console.warn("IndexedDB 読み込み失敗", error);
+    return [];
+  }
+}
+
+async function saveSpeciesToIndexedDB(species) {
+  if (!window.indexedDB || species.length === 0) return;
+  try {
+    const db = await openSpeciesDb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(SPECIES_STORE, "readwrite");
+      const store = tx.objectStore(SPECIES_STORE);
+      store.clear();
+      for (const row of species) {
+        store.put({
+          id: row.id,
+          name: row.name,
+          preferred_common_name: row.preferred_common_name || row.japaneseName || "",
+          count: row.count || 0,
+          default_photo: row.default_photo || "",
+          wikipedia_url: row.wikipedia_url || "",
+        });
+      }
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+    db.close();
+  } catch (error) {
+    console.warn("IndexedDB 保存失敗", error);
+  }
 }
 
 function wireEvents() {
