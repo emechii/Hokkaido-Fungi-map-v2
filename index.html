@@ -9,7 +9,7 @@
   <body>
     <header class="site-header">
       <h1>北海道菌類リスト</h1>
-      <p class="subtitle">Powerd by 北菌同好会</p>
+      <p class="subtitle">Powered by 北菌同好会 (iNaturalist-北菌bot)</p>
     </header>
 
     <main class="layout">
@@ -23,7 +23,10 @@
         </section>
 
         <section class="sidebar-list-section">
-          <h2 id="listTitle">和名(五十音)</h2>
+          <div class="list-title-row">
+            <h2 id="listTitle">和名(五十音)</h2>
+            <div id="jumpNav" class="jump-nav" aria-label="種名ジャンプ"></div>
+          </div>
           <div id="speciesList" class="species-list" aria-live="polite"></div>
         </section>
 

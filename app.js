@@ -59,12 +59,14 @@ const state = {
   selectedTaxonId: null,
   mapBounds: { ...DEFAULT_BOUNDS },
   mapProjection: computeMapProjection(DEFAULT_BOUNDS),
+  listScrollByMode: { jp: 0, scientific: 0 },
 };
 
 const dom = {
   speciesList: document.getElementById("speciesList"),
   listTitle: document.getElementById("listTitle"),
   speciesCount: document.getElementById("speciesCount"),
+  jumpNav: document.getElementById("jumpNav"),
   content: document.querySelector(".content"),
   detailCard: document.getElementById("detailCard"),
   detailJaName: document.getElementById("detailJaName"),
@@ -258,13 +260,19 @@ async function saveSpeciesToIndexedDB(species) {
 }
 
 function wireEvents() {
+  dom.speciesList.addEventListener("scroll", () => {
+    state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+  });
+
   dom.jpModeBtn.addEventListener("click", () => {
+    state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
     state.currentMode = "jp";
     updateToggleState();
     renderSpeciesList();
   });
 
   dom.scientificModeBtn.addEventListener("click", () => {
+    state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
     state.currentMode = "scientific";
     updateToggleState();
     renderSpeciesList();
@@ -305,19 +313,51 @@ function renderSpeciesList() {
   let lastGroup = null;
   for (const taxon of sorted) {
     const groupLabel = inJpMode ? groupByGojuon(taxon.japaneseName) : extractGenus(taxon.name);
+    const groupKey = inJpMode ? groupLabel : (groupLabel || "").charAt(0).toUpperCase();
     if (groupLabel !== lastGroup) {
-      dom.speciesList.appendChild(createGroupHeading(groupLabel));
+      dom.speciesList.appendChild(createGroupHeading(groupLabel, groupKey));
       lastGroup = groupLabel;
     }
     dom.speciesList.appendChild(createListButton(taxon));
   }
+
+  renderJumpNav(inJpMode);
+  requestAnimationFrame(() => {
+    dom.speciesList.scrollTop = state.listScrollByMode[state.currentMode] || 0;
+  });
 }
 
-function createGroupHeading(label) {
+function createGroupHeading(label, groupKey) {
   const heading = document.createElement("div");
   heading.className = "genus-heading";
   heading.textContent = label;
+  heading.dataset.groupKey = groupKey;
   return heading;
+}
+
+function renderJumpNav(inJpMode) {
+  if (!dom.jumpNav) return;
+  dom.jumpNav.innerHTML = "";
+
+  const keys = inJpMode
+    ? GOJUON_ORDER
+    : Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
+
+  for (const key of keys) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "jump-btn";
+    btn.textContent = key;
+    btn.addEventListener("click", () => scrollToGroup(key));
+    dom.jumpNav.appendChild(btn);
+  }
+}
+
+function scrollToGroup(key) {
+  const target = dom.speciesList.querySelector(`.genus-heading[data-group-key="${key}"]`);
+  if (target) {
+    target.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
 }
 
 function groupByGojuon(name) {
@@ -418,6 +458,7 @@ function renderPhotos(taxon, observations) {
         obsUrl,
         userName,
         score,
+        licenseCode: String(photo.license_code || obs.license_code || "").toUpperCase(),
       }));
     })
     .filter((item) => item.imageUrl && item.obsUrl);
@@ -452,9 +493,7 @@ function renderPhotos(taxon, observations) {
 
   renderPhotoStack();
 
-  const displayedCount = Math.min(photoItems.length, THUMBNAIL_GRID_TOTAL);
-  const totalObs = Number(taxon?.count || observations.length || 0);
-  if (totalObs > displayedCount || observations.length > displayedCount) {
+  if (state.projectId) {
     const observationsUrl = new URL("https://www.inaturalist.org/observations");
     observationsUrl.searchParams.set("project_id", PROJECT_SLUG);
     observationsUrl.searchParams.set("taxon_id", String(taxon.id));
@@ -511,7 +550,8 @@ function createPhotoCard(item, isFeatured, isActive = false, clickable = false, 
   source.href = item.obsUrl;
   source.target = "_blank";
   source.rel = "noopener noreferrer";
-  source.textContent = `by ${item.userName}`;
+  const licenseText = item.licenseCode ? ` (${item.licenseCode})` : "";
+  source.textContent = `© ${item.userName}${licenseText}`;
 
   card.appendChild(img);
 

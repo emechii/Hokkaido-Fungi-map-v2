@@ -91,6 +91,34 @@ body {
   margin: 0 0 6px;
 }
 
+
+.list-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.jump-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px;
+  max-width: 145px;
+}
+
+.jump-btn {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  font-size: 9px;
+  line-height: 1;
+  color: #8fd8ac;
+  background: transparent;
+  border: 1px solid #1f7a3f;
+  cursor: pointer;
+}
+
 .toggle-row {
   display: flex;
   gap: 8px;
@@ -276,7 +304,7 @@ body {
   right: 0;
   bottom: 0;
   padding: 2px 6px;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   background: rgba(0, 0, 0, 0.6);
   color: #bceccd;
   text-decoration: none;
