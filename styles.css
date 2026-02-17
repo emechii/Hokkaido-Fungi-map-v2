@@ -60,8 +60,8 @@ body {
 
 .sidebar {
   padding: 14px;
-  overflow: hidden;
-  max-height: calc(100vh - 220px);
+  overflow: visible;
+  max-height: none;
 }
 
 .toggle-row {
@@ -94,8 +94,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  max-height: calc(100vh - 250px);
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
   padding-right: 6px;
 }
 
@@ -158,24 +158,56 @@ body {
   gap: 10px;
 }
 
-.featured-photo {
-  width: 100%;
-  max-height: 480px;
-  object-fit: cover;
+.photo-card {
+  position: relative;
+  overflow: hidden;
   border: 1px solid var(--line-soft);
+  background: #07100b;
+}
+
+.featured-card {
+  max-width: 520px;
+}
+
+.featured-photo {
+  display: block;
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  object-position: center;
 }
 
 .photo-thumbs {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
 }
 
+.thumb-card {
+  min-width: 0;
+}
+
 .thumb-photo {
+  display: block;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  height: 72px;
   object-fit: cover;
-  border: 1px solid var(--line-soft);
+  object-position: center;
+}
+
+.photo-source {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2px 6px;
+  font-size: 0.72rem;
+  background: rgba(0, 0, 0, 0.6);
+  color: #bceccd;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .obs-link-wrap {
@@ -184,11 +216,12 @@ body {
 
 .obs-link-button {
   display: inline-block;
-  padding: 0.35rem 0.55rem;
-  font-size: 0.82rem;
+  padding: 0.28rem 0.5rem;
+  font-size: 0.76rem;
   color: var(--accent);
   border: 1px solid var(--line);
   text-decoration: none;
+  background: #0b1a12;
 }
 
 .meta-grid {
@@ -241,6 +274,10 @@ body {
   }
 
   .species-list {
-    max-height: 420px;
+    max-height: none;
+  }
+
+  .photo-thumbs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

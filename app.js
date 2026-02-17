@@ -345,43 +345,39 @@ function renderPhotos(taxon, observations) {
   dom.obsLinkBtn.classList.add("hidden");
   dom.obsLinkBtn.removeAttribute("href");
 
-  const photoUrls = observations
-    .flatMap((obs) => obs.photos || [])
-    .map((photo) => photo.url?.replace("square", "medium"))
-    .filter(Boolean);
+  const photoItems = observations
+    .flatMap((obs) => {
+      const obsUrl = obs.uri || (obs.id ? `https://www.inaturalist.org/observations/${obs.id}` : null);
+      const userName = obs.user?.login || "unknown";
+      return (obs.photos || []).map((photo) => ({
+        imageUrl: photo.url?.replace("square", "medium"),
+        obsUrl,
+        userName,
+      }));
+    })
+    .filter((item) => item.imageUrl && item.obsUrl);
 
-  if (photoUrls.length === 0) {
+  if (photoItems.length === 0) {
     dom.photoGrid.innerHTML = "<p>写真付き観察が見つかりませんでした（ローカル表示モード）。</p>";
     return;
   }
 
-  const [featuredUrl, ...restUrls] = photoUrls;
+  const [featuredItem, ...restItems] = photoItems;
+  dom.photoGrid.appendChild(createPhotoCard(featuredItem, true));
 
-  const featuredImg = document.createElement("img");
-  featuredImg.src = featuredUrl;
-  featuredImg.alt = "iNaturalist observation photo (featured)";
-  featuredImg.loading = "eager";
-  featuredImg.className = "featured-photo";
-  dom.photoGrid.appendChild(featuredImg);
-
-  const thumbUrls = restUrls.slice(0, THUMBNAIL_LIMIT);
-  if (thumbUrls.length > 0) {
+  const thumbItems = restItems.slice(0, THUMBNAIL_LIMIT);
+  if (thumbItems.length > 0) {
     const thumbGrid = document.createElement("div");
     thumbGrid.className = "photo-thumbs";
 
-    for (const url of thumbUrls) {
-      const thumb = document.createElement("img");
-      thumb.src = url;
-      thumb.alt = "iNaturalist observation photo (thumbnail)";
-      thumb.loading = "lazy";
-      thumb.className = "thumb-photo";
-      thumbGrid.appendChild(thumb);
+    for (const item of thumbItems) {
+      thumbGrid.appendChild(createPhotoCard(item, false));
     }
 
     dom.photoGrid.appendChild(thumbGrid);
   }
 
-  const displayedCount = FEATURED_PHOTO_COUNT + thumbUrls.length;
+  const displayedCount = FEATURED_PHOTO_COUNT + thumbItems.length;
   const totalObs = Number(taxon?.count || observations.length || 0);
   if (totalObs > displayedCount || observations.length > displayedCount) {
     const observationsUrl = new URL("https://www.inaturalist.org/observations");
@@ -391,6 +387,34 @@ function renderPhotos(taxon, observations) {
     dom.obsLinkBtn.href = observationsUrl.toString();
     dom.obsLinkBtn.classList.remove("hidden");
   }
+}
+
+function createPhotoCard(item, isFeatured) {
+  const card = document.createElement("div");
+  card.className = isFeatured ? "photo-card featured-card" : "photo-card thumb-card";
+
+  const imageLink = document.createElement("a");
+  imageLink.href = item.obsUrl;
+  imageLink.target = "_blank";
+  imageLink.rel = "noopener noreferrer";
+
+  const img = document.createElement("img");
+  img.src = item.imageUrl;
+  img.alt = "iNaturalist observation photo";
+  img.loading = isFeatured ? "eager" : "lazy";
+  img.className = isFeatured ? "featured-photo" : "thumb-photo";
+  imageLink.appendChild(img);
+
+  const source = document.createElement("a");
+  source.className = "photo-source";
+  source.href = item.obsUrl;
+  source.target = "_blank";
+  source.rel = "noopener noreferrer";
+  source.textContent = `by ${item.userName}`;
+
+  card.appendChild(imageLink);
+  card.appendChild(source);
+  return card;
 }
 
 function renderDistribution(observations) {
