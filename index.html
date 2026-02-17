@@ -3,19 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>北海道産菌類リスト</title>
+    <title>北海道菌類リスト</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="site-header">
-      <h1>北海道産菌類リスト</h1>
-      <p class="subtitle">iNaturalist: Fungi of Hokkaido から自動取得</p>
+      <h1>北海道菌類リスト</h1>
+      <p class="subtitle">Powerd by 北菌同好会</p>
     </header>
 
     <main class="layout">
       <aside class="sidebar panel">
         <section>
-          <h2>名前一覧の表示</h2>
+          <h2 class="list-heading">種名リスト</h2>
           <div class="toggle-row">
             <button id="jpSortBtn" class="toggle-button active">和名</button>
             <button id="scientificSortBtn" class="toggle-button">学名</button>
@@ -23,7 +23,7 @@
         </section>
 
         <section>
-          <h2 id="listTitle">和名順（五十音）</h2>
+          <h2 id="listTitle">和名(五十音)</h2>
           <div id="speciesList" class="species-list" aria-live="polite"></div>
         </section>
       </aside>
@@ -38,6 +38,9 @@
           <section>
             <h3>観察写真</h3>
             <div id="photoGrid" class="photo-grid"></div>
+            <div class="obs-link-wrap">
+              <a id="obsLinkBtn" class="obs-link-button hidden" target="_blank" rel="noopener noreferrer">iNaturalistで観察記録を表示</a>
+            </div>
           </section>
 
           <section class="meta-grid">

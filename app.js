@@ -6,7 +6,8 @@ const SPECIES_DB_NAME = "hokkaido-fungi-db";
 const SPECIES_STORE = "species";
 const SPECIES_DB_VERSION = 1;
 const SPECIES_PER_PAGE = 200;
-const PHOTO_LIMIT = 12;
+const FEATURED_PHOTO_COUNT = 1;
+const THUMBNAIL_LIMIT = 14;
 const OBS_PER_PAGE = 200;
 const MAX_OBS_PAGES = 3;
 
@@ -55,6 +56,7 @@ const dom = {
   jpModeBtn: document.getElementById("jpSortBtn"),
   scientificModeBtn: document.getElementById("scientificSortBtn"),
   homeBtn: document.getElementById("homeBtn"),
+  obsLinkBtn: document.getElementById("obsLinkBtn"),
 };
 
 initialize().catch((error) => {
@@ -262,7 +264,7 @@ function renderSpeciesList() {
   dom.speciesList.innerHTML = "";
 
   const inJpMode = state.currentMode === "jp";
-  dom.listTitle.textContent = inJpMode ? "和名順（五十音）" : "学名順（アルファベット）";
+  dom.listTitle.textContent = inJpMode ? "和名(五十音)" : "学名(A~Z)";
 
   const sorted = [...state.species].sort((a, b) => {
     if (inJpMode) {
@@ -326,7 +328,7 @@ async function selectTaxon(taxon) {
   setStatus(`「${taxon.japaneseName}」の観察記録を取得しています...`);
 
   const observations = state.projectId ? await fetchObservationsForTaxon(taxon.id) : [];
-  renderPhotos(observations);
+  renderPhotos(taxon, observations);
   renderDistribution(observations);
 
   if (!state.projectId) {
@@ -335,28 +337,59 @@ async function selectTaxon(taxon) {
     return;
   }
 
-  setStatus(`観察記録 ${observations.length} 件を表示しています。`);
+  setStatus(`${observations.length}件の観察記録`);
 }
 
-function renderPhotos(observations) {
+function renderPhotos(taxon, observations) {
   dom.photoGrid.innerHTML = "";
+  dom.obsLinkBtn.classList.add("hidden");
+  dom.obsLinkBtn.removeAttribute("href");
+
   const photoUrls = observations
     .flatMap((obs) => obs.photos || [])
     .map((photo) => photo.url?.replace("square", "medium"))
-    .filter(Boolean)
-    .slice(0, PHOTO_LIMIT);
+    .filter(Boolean);
 
   if (photoUrls.length === 0) {
     dom.photoGrid.innerHTML = "<p>写真付き観察が見つかりませんでした（ローカル表示モード）。</p>";
     return;
   }
 
-  for (const url of photoUrls) {
-    const img = document.createElement("img");
-    img.src = url;
-    img.alt = "iNaturalist observation photo";
-    img.loading = "lazy";
-    dom.photoGrid.appendChild(img);
+  const [featuredUrl, ...restUrls] = photoUrls;
+
+  const featuredImg = document.createElement("img");
+  featuredImg.src = featuredUrl;
+  featuredImg.alt = "iNaturalist observation photo (featured)";
+  featuredImg.loading = "eager";
+  featuredImg.className = "featured-photo";
+  dom.photoGrid.appendChild(featuredImg);
+
+  const thumbUrls = restUrls.slice(0, THUMBNAIL_LIMIT);
+  if (thumbUrls.length > 0) {
+    const thumbGrid = document.createElement("div");
+    thumbGrid.className = "photo-thumbs";
+
+    for (const url of thumbUrls) {
+      const thumb = document.createElement("img");
+      thumb.src = url;
+      thumb.alt = "iNaturalist observation photo (thumbnail)";
+      thumb.loading = "lazy";
+      thumb.className = "thumb-photo";
+      thumbGrid.appendChild(thumb);
+    }
+
+    dom.photoGrid.appendChild(thumbGrid);
+  }
+
+  const displayedCount = FEATURED_PHOTO_COUNT + thumbUrls.length;
+  const totalObs = Number(taxon?.count || observations.length || 0);
+  if (totalObs > displayedCount || observations.length > displayedCount) {
+    const observationsUrl = new URL("https://www.inaturalist.org/observations");
+    observationsUrl.searchParams.set("project_id", PROJECT_SLUG);
+    observationsUrl.searchParams.set("taxon_id", String(taxon.id));
+
+    dom.obsLinkBtn.href = observationsUrl.toString();
+    dom.obsLinkBtn.classList.remove("hidden");
   }
 }
 
