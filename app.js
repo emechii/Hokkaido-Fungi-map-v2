@@ -7,7 +7,7 @@ const SPECIES_STORE = "species";
 const SPECIES_DB_VERSION = 1;
 const SPECIES_PER_PAGE = 200;
 const FEATURED_PHOTO_COUNT = 1;
-const THUMBNAIL_LIMIT = 14;
+const THUMBNAIL_GRID_TOTAL = 14;
 const OBS_PER_PAGE = 200;
 const MAX_OBS_PAGES = 3;
 
@@ -438,10 +438,10 @@ function renderPhotos(taxon, observations) {
     const thumbGrid = document.createElement("div");
     thumbGrid.className = "photo-thumbs";
 
-    const visibleThumbCount = Math.min(photoItems.length, THUMBNAIL_LIMIT + 1);
-    for (let i = 0; i < visibleThumbCount; i += 1) {
-      const thumbCard = createPhotoCard(photoItems[i], false, i === selectedIndex, true, () => {
-        selectedIndex = i;
+    const displayIndices = computeDisplayIndices(photoItems.length, selectedIndex, THUMBNAIL_GRID_TOTAL);
+    for (const idx of displayIndices) {
+      const thumbCard = createPhotoCard(photoItems[idx], false, idx === selectedIndex, true, () => {
+        selectedIndex = idx;
         renderPhotoStack();
       });
       thumbGrid.appendChild(thumbCard);
@@ -452,7 +452,7 @@ function renderPhotos(taxon, observations) {
 
   renderPhotoStack();
 
-  const displayedCount = Math.min(photoItems.length, THUMBNAIL_LIMIT + 1);
+  const displayedCount = Math.min(photoItems.length, THUMBNAIL_GRID_TOTAL);
   const totalObs = Number(taxon?.count || observations.length || 0);
   if (totalObs > displayedCount || observations.length > displayedCount) {
     const observationsUrl = new URL("https://www.inaturalist.org/observations");
@@ -462,6 +462,19 @@ function renderPhotos(taxon, observations) {
     dom.obsLinkBtn.href = observationsUrl.toString();
     dom.obsLinkBtn.classList.remove("hidden");
   }
+}
+
+function computeDisplayIndices(total, selectedIndex, maxCount) {
+  const count = Math.min(total, maxCount);
+  const indices = [];
+  for (let i = 0; i < count; i += 1) indices.push(i);
+
+  if (selectedIndex >= count) {
+    indices[count - 1] = selectedIndex;
+    indices.sort((a, b) => a - b);
+  }
+
+  return indices;
 }
 
 function findBestFeaturedIndex(photoItems) {
@@ -553,8 +566,8 @@ function renderDistribution(observations) {
     halo.setAttribute("cx", String(cell.x));
     halo.setAttribute("cy", String(cell.y));
     halo.setAttribute("r", radius.toFixed(2));
-    halo.setAttribute("fill", "#55ff88");
-    halo.setAttribute("fill-opacity", String(0.08 + intensity * 0.22));
+    halo.setAttribute("fill", "#ff4d4d");
+    halo.setAttribute("fill-opacity", String(0.1 + intensity * 0.22));
     dom.distributionLayer.appendChild(halo);
 
   }
@@ -808,7 +821,12 @@ function renderSeasonality(counts) {
     <path d="${area}" fill="#173325" fill-opacity="0.45"></path>
     <path d="${line}" fill="none" stroke="#39b268" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
     ${points.map((p) => `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="2.6" fill="#39b268"></circle>`).join("")}
-    ${Array.from({ length: 12 }, (_, i) => `<text x="${(padL + (gw * i) / 11).toFixed(2)}" y="${h - 8}" fill="#8eac98" font-size="11" text-anchor="middle">${i + 1}月</text>`).join("")}
+    ${Array.from({ length: 12 }, (_, i) => {
+      const isPeak = maxValue > 0 && data[i] === maxValue;
+      const hasObs = data[i] > 0;
+      const color = isPeak ? "#ff6b6b" : hasObs ? "#f2d15b" : "#8eac98";
+      return `<text x="${(padL + (gw * i) / 11).toFixed(2)}" y="${h - 8}" fill="${color}" font-size="11" text-anchor="middle">${i + 1}月</text>`;
+    }).join("")}
   `;
 }
 

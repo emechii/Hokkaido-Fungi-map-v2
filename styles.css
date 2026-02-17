@@ -14,7 +14,7 @@
 
 body {
   margin: 0;
-  font-family: "Noto Sans JP", system-ui, -apple-system, sans-serif;
+  font-family: "Yu Gothic", "YuGothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
   background: var(--bg);
   color: var(--text);
 }
@@ -151,6 +151,7 @@ body {
 
 .primary-name {
   display: block;
+  font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
 }
 
 .list-item small {
@@ -187,7 +188,7 @@ body {
   margin: 0;
   color: #c8f2d9;
   font-style: italic;
-  font-family: "Times New Roman", Times, serif;
+  font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
   font-size: 2rem;
   line-height: 1.2;
 }
@@ -198,7 +199,7 @@ body {
 }
 
 .scientific-text {
-  font-family: "Times New Roman", Times, serif;
+  font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
   font-style: italic;
 }
 
@@ -233,6 +234,8 @@ body {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
+  width: min(680px, 100%);
+  margin: 0 auto;
 }
 
 .thumb-card {
@@ -377,4 +380,37 @@ body {
   .featured-photo {
     height: 320px;
   }
+}
+
+
+.species-list,
+.content {
+  scrollbar-width: thin;
+  scrollbar-color: #39b268 #0b1a12;
+}
+
+.species-list::-webkit-scrollbar,
+.content::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.species-list::-webkit-scrollbar-track,
+.content::-webkit-scrollbar-track {
+  background: #0b1a12;
+  border: 1px solid #1f7a3f;
+}
+
+.species-list::-webkit-scrollbar-thumb,
+.content::-webkit-scrollbar-thumb {
+  background: #1f7a3f;
+  border: 2px solid #0b1a12;
+}
+
+.species-list::-webkit-scrollbar-button,
+.content::-webkit-scrollbar-button {
+  display: block;
+  height: 12px;
+  background: #0f2a1c;
+  border: 1px solid #1f7a3f;
 }
