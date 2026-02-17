@@ -276,9 +276,44 @@ function renderSpeciesList() {
     return aSci.localeCompare(bSci, "en");
   });
 
+  let lastGroup = null;
   for (const taxon of sorted) {
+    const groupLabel = inJpMode ? groupByGojuon(taxon.japaneseName) : extractGenus(taxon.name);
+    if (groupLabel !== lastGroup) {
+      dom.speciesList.appendChild(createGroupHeading(groupLabel));
+      lastGroup = groupLabel;
+    }
     dom.speciesList.appendChild(createListButton(taxon));
   }
+}
+
+function createGroupHeading(label) {
+  const heading = document.createElement("div");
+  heading.className = "genus-heading";
+  heading.textContent = label;
+  return heading;
+}
+
+function groupByGojuon(name) {
+  const first = toHiragana((name || "").trim().charAt(0));
+  if (!first) return "その他";
+
+  if ("ぁあぃいぅうぇえぉお".includes(first)) return "あ";
+  if ("かがきぎくぐけげこご".includes(first)) return "か";
+  if ("さざしじすずせぜそぞ".includes(first)) return "さ";
+  if ("ただちぢっつづてでとど".includes(first)) return "た";
+  if ("なにぬねの".includes(first)) return "な";
+  if ("はばぱひびぴふぶぷへべぺほぼぽ".includes(first)) return "は";
+  if ("まみむめも".includes(first)) return "ま";
+  if ("ゃやゅゆょよ".includes(first)) return "や";
+  if ("らりるれろ".includes(first)) return "ら";
+  if ("ゎわゐゑをん".includes(first)) return "わ/ん";
+
+  return "その他";
+}
+
+function toHiragana(text) {
+  return text.replace(/[ァ-ヶ]/g, (char) => String.fromCharCode(char.charCodeAt(0) - 0x60));
 }
 
 function createListButton(taxon) {

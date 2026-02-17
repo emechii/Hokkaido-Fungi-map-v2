@@ -113,7 +113,10 @@ body {
 
 .genus-heading {
   color: #9bd5b1;
-  margin-top: 8px;
+  margin-top: 10px;
+  margin-bottom: 3px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
   cursor: default;
 }
 
