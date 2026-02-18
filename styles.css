@@ -1,0 +1,466 @@
+:root {
+  --bg: #040806;
+  --panel: #08110c;
+  --line: #1f7a3f;
+  --line-soft: #184f2e;
+  --text: #d3eadb;
+  --muted: #8eac98;
+  --accent: #4dc678;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Yu Gothic", "YuGothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.site-header {
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+  padding: 1.2rem 1rem;
+}
+
+.site-header h1 {
+  margin: 0;
+  letter-spacing: 0.08em;
+}
+
+.subtitle {
+  margin-top: 0.3rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+
+.list-heading {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.species-count {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 16px;
+  padding: 16px;
+  height: calc(100vh - 170px);
+  min-height: calc(100vh - 170px);
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0;
+}
+
+.sidebar {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.sidebar-top {
+  flex: 0 0 auto;
+}
+
+.sidebar-list-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#listTitle {
+  margin: 0 0 6px;
+}
+
+
+.list-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.jump-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px;
+  max-width: 145px;
+}
+
+.jump-btn {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  font-size: 9px;
+  line-height: 1;
+  color: #8fd8ac;
+  background: transparent;
+  border: 1px solid #1f7a3f;
+  cursor: pointer;
+}
+
+.jump-nav[data-mode="jp"] {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(10, 14px);
+  grid-auto-columns: 14px;
+  justify-content: end;
+}
+
+.jump-nav[data-mode="scientific"] {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.toggle-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.second-row {
+  margin-bottom: 14px;
+}
+
+.toggle-button,
+.home-button {
+  background: #0b1a12;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+}
+
+.toggle-button.active {
+  background: #12311f;
+  color: var(--accent);
+  border-color: #2ea156;
+}
+
+.species-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 6px;
+  overscroll-behavior: contain;
+}
+
+.list-item,
+.genus-heading {
+  border: none;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  padding: 2px 0;
+  cursor: pointer;
+  line-height: 1.35;
+  border-radius: 0;
+}
+
+.genus-heading {
+  color: #9bd5b1;
+  margin-top: 10px;
+  margin-bottom: 3px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: default;
+}
+
+.primary-name {
+  display: block;
+  font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
+}
+
+.list-item small {
+  display: block;
+  color: var(--muted);
+}
+
+.list-item.selected {
+  color: var(--accent);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow: auto;
+}
+
+.status {
+  padding: 0.8rem;
+  color: var(--muted);
+}
+
+.detail {
+  padding: 1rem;
+}
+
+.hidden {
+  display: none;
+}
+
+.sci-name {
+  margin: 0;
+  color: #c8f2d9;
+  font-style: italic;
+  font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.ja-name {
+  margin-top: 6px;
+  color: #93c8a7;
+}
+
+.scientific-text {
+  font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
+  font-style: italic;
+}
+
+.photo-grid {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.photo-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  background: #07100b;
+}
+
+.featured-card {
+  width: min(680px, 100%);
+  margin: 0 auto;
+}
+
+.featured-photo {
+  display: block;
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.photo-thumbs {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  width: min(680px, 100%);
+  margin: 0 auto;
+}
+
+.thumb-card {
+  min-width: 0;
+}
+
+.thumb-photo {
+  display: block;
+  width: 100%;
+  height: 72px;
+  object-fit: cover;
+  object-position: center;
+}
+
+
+.thumb-clickable {
+  cursor: pointer;
+}
+
+.thumb-card.is-active {
+  box-shadow: inset 0 0 0 1px #6ed78a;
+}
+
+.active-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 0.66rem;
+  padding: 1px 6px;
+  background: rgba(14, 45, 26, 0.9);
+  border: 1px solid #2ea156;
+  color: #bff6cf;
+}
+
+.photo-source {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  background: rgba(0, 0, 0, 0.6);
+  color: #bceccd;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.obs-link-wrap {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.obs-link-button {
+  display: inline-block;
+  padding: 0.28rem 0.5rem;
+  font-size: 0.76rem;
+  color: var(--accent);
+  border: 1px solid var(--line);
+  text-decoration: none;
+  background: #0b1a12;
+}
+
+.seasonality-section {
+  margin-top: 8px;
+}
+
+.seasonality-wrap {
+  border: 1px solid var(--line-soft);
+  padding: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+#seasonalityChart {
+  width: min(100%, 640px);
+  height: auto;
+  display: block;
+}
+
+.meta-grid {
+  margin: 14px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+}
+
+.meta-grid div {
+  border: 1px solid var(--line-soft);
+  padding: 8px;
+}
+
+
+.distribution-summary {
+  margin: 4px 0 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.map-wrap {
+  border: 1px solid var(--line-soft);
+  padding: 8px;
+}
+
+#hokkaidoMap {
+  width: 100%;
+  height: auto;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 20px;
+}
+
+.home-button {
+  min-width: 160px;
+  color: var(--accent);
+}
+
+@media (max-width: 1000px) {
+  .layout {
+    grid-template-columns: minmax(185px, 42vw) 1fr;
+    height: auto;
+    min-height: calc(100vh - 170px);
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .sidebar {
+    min-height: auto;
+    padding: 10px;
+  }
+
+  .list-heading {
+    font-size: 0.8rem;
+  }
+
+  .species-list {
+    max-height: 55vh;
+  }
+
+  .photo-thumbs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .featured-photo {
+    height: 320px;
+  }
+}
+
+
+.species-list,
+.content {
+  scrollbar-width: thin;
+  scrollbar-color: #39b268 #0b1a12;
+}
+
+.species-list::-webkit-scrollbar,
+.content::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.species-list::-webkit-scrollbar-track,
+.content::-webkit-scrollbar-track {
+  background: #0b1a12;
+  border: 1px solid #1f7a3f;
+}
+
+.species-list::-webkit-scrollbar-thumb,
+.content::-webkit-scrollbar-thumb {
+  background: #1f7a3f;
+  border: 2px solid #0b1a12;
+}
+
+.species-list::-webkit-scrollbar-button,
+.content::-webkit-scrollbar-button {
+  display: block;
+  height: 12px;
+  background: #0f2a1c;
+  border: 1px solid #1f7a3f;
+}

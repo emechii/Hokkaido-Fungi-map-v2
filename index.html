@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>北海道菌類リスト</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <h1>北海道菌類リスト</h1>
+      <p class="subtitle">Powered by 北菌同好会 (iNaturalist-北菌bot)</p>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar panel">
+        <section class="sidebar-top">
+          <h2 class="list-heading">種名リスト <small id="speciesCount" class="species-count">-種</small></h2>
+          <div class="toggle-row">
+            <button id="jpSortBtn" class="toggle-button active">和名</button>
+            <button id="scientificSortBtn" class="toggle-button">学名</button>
+          </div>
+        </section>
+
+        <section class="sidebar-list-section">
+          <div class="list-title-row">
+            <h2 id="listTitle">和名(五十音)</h2>
+            <div id="jumpNav" class="jump-nav" aria-label="種名ジャンプ"></div>
+          </div>
+          <div id="speciesList" class="species-list" aria-live="polite"></div>
+        </section>
+
+      </aside>
+
+      <section class="content">
+        <article id="detailCard" class="panel detail hidden" aria-live="polite">
+          <h2 id="detailSciName" class="sci-name">-</h2>
+          <p id="detailJaName" class="ja-name">-</p>
+
+          <section>
+            <div id="photoGrid" class="photo-grid"></div>
+            <div class="obs-link-wrap">
+              <a id="obsLinkBtn" class="obs-link-button hidden" target="_blank" rel="noopener noreferrer">iNaturalistで観察記録を表示</a>
+            </div>
+          </section>
+
+          <section class="seasonality-section">
+            <h3>種の季節性</h3>
+            <div class="seasonality-wrap">
+              <svg id="seasonalityChart" viewBox="0 0 640 220" role="img" aria-label="種の季節性グラフ"></svg>
+            </div>
+          </section>
+
+          <section class="meta-grid">
+            <div><span>属:</span> <strong id="metaGenus">-</strong></div>
+            <div><span>科:</span> <strong id="metaFamily">-</strong></div>
+            <div><span>観察数:</span> <strong id="metaObsCount">-</strong></div>
+            <div><span>最終更新:</span> <strong id="metaUpdated">-</strong></div>
+          </section>
+
+          <section>
+            <h3>道内分布図</h3>
+            <p id="distributionSummary" class="distribution-summary">分布ポイントを読み込み中...</p>
+            <div class="map-wrap">
+              <svg id="hokkaidoMap" viewBox="0 0 600 380" role="img" aria-label="北海道分布マップ">
+                <defs>
+                  <linearGradient id="mapGradient" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#0c1410" />
+                    <stop offset="100%" stop-color="#0a0f0d" />
+                  </linearGradient>
+                </defs>
+                <rect x="10" y="10" width="580" height="360" fill="url(#mapGradient)" stroke="#1f7a3f" stroke-width="2" />
+                <path
+                  id="hokkaidoOutline"
+                  d="M140 300 L118 286 L102 265 L94 242 L93 221 L103 201 L119 188 L136 182 L150 170 L159 152 L170 135 L188 120 L208 108 L229 95 L252 84 L276 73 L301 63 L329 57 L357 59 L381 70 L401 88 L410 108 L408 130 L399 148 L386 160 L394 172 L414 176 L439 176 L466 181 L490 193 L509 210 L524 229 L540 247 L561 252 L580 260 L588 274 L583 288 L569 299 L551 307 L530 311 L510 318 L496 329 L484 344 L471 356 L452 365 L428 371 L402 374 L376 377 L349 381 L322 384 L298 377 L280 364 L263 351 L244 344 L223 339 L200 337 L177 337 L158 342 L144 352 L130 360 L117 353 L112 337 L119 321 Z"
+                  fill="#173325"
+                  stroke="#39b268"
+                  stroke-width="2"
+                />
+                <g id="distributionLayer"></g>
+              </svg>
+            </div>
+          </section>
+        </article>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <button id="homeBtn" class="home-button">ホームへ戻る</button>
+    </footer>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>

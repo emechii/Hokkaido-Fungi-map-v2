@@ -1,0 +1,18 @@
+{
+  "project_slug": "fungi-of-hokkaido",
+  "generated_at": "2026-02-17T00:00:00.000Z",
+  "species": [
+    {"id": 47170, "name": "Amanita muscaria", "preferred_common_name": "ベニテングタケ", "count": 12, "default_photo": "", "wikipedia_url": ""},
+    {"id": 121883, "name": "Amanita vaginata", "preferred_common_name": "ツルタケ", "count": 7, "default_photo": "", "wikipedia_url": ""},
+    {"id": 48731, "name": "Boletus edulis", "preferred_common_name": "ヤマドリタケ", "count": 8, "default_photo": "", "wikipedia_url": ""},
+    {"id": 118260, "name": "Cantharellus cibarius", "preferred_common_name": "アンズタケ", "count": 10, "default_photo": "", "wikipedia_url": ""},
+    {"id": 55601, "name": "Coprinopsis atramentaria", "preferred_common_name": "ヒトヨタケ", "count": 6, "default_photo": "", "wikipedia_url": ""},
+    {"id": 48496, "name": "Flammulina velutipes", "preferred_common_name": "エノキタケ", "count": 14, "default_photo": "", "wikipedia_url": ""},
+    {"id": 56813, "name": "Hericium erinaceus", "preferred_common_name": "ヤマブシタケ", "count": 5, "default_photo": "", "wikipedia_url": ""},
+    {"id": 48702, "name": "Hypsizygus marmoreus", "preferred_common_name": "ブナシメジ", "count": 9, "default_photo": "", "wikipedia_url": ""},
+    {"id": 55582, "name": "Laccaria amethystina", "preferred_common_name": "ムラサキアブラシメジモドキ", "count": 4, "default_photo": "", "wikipedia_url": ""},
+    {"id": 49546, "name": "Lentinula edodes", "preferred_common_name": "シイタケ", "count": 8, "default_photo": "", "wikipedia_url": ""},
+    {"id": 124057, "name": "Pleurotus ostreatus", "preferred_common_name": "ヒラタケ", "count": 6, "default_photo": "", "wikipedia_url": ""},
+    {"id": 55693, "name": "Trametes versicolor", "preferred_common_name": "カワラタケ", "count": 7, "default_photo": "", "wikipedia_url": ""}
+  ]
+}
