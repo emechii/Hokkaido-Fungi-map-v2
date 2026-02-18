@@ -355,6 +355,9 @@ function renderJumpNav(inJpMode) {
 
   const keys = inJpMode
     ? GOJUON_JUMP_ORDER
+
+  const keys = inJpMode
+    ? GOJUON_ORDER
     : Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 
   for (const key of keys) {
