@@ -119,6 +119,21 @@ body {
   cursor: pointer;
 }
 
+.jump-nav[data-mode="jp"] {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(10, 14px);
+  grid-auto-columns: 14px;
+  justify-content: end;
+}
+
+.jump-nav[data-mode="scientific"] {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
 .toggle-row {
   display: flex;
   gap: 8px;
@@ -388,13 +403,20 @@ body {
 
 @media (max-width: 1000px) {
   .layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(185px, 42vw) 1fr;
     height: auto;
     min-height: calc(100vh - 170px);
+    gap: 10px;
+    padding: 10px;
   }
 
   .sidebar {
     min-height: auto;
+    padding: 10px;
+  }
+
+  .list-heading {
+    font-size: 0.8rem;
   }
 
   .species-list {

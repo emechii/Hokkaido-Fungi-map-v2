@@ -27,6 +27,19 @@ const GOJUON_ORDER = [
   "わ", "を", "ん",
 ];
 
+const GOJUON_JUMP_ORDER = [
+  "あ", "い", "う", "え", "お",
+  "か", "き", "く", "け", "こ",
+  "さ", "し", "す", "せ", "そ",
+  "た", "ち", "つ", "て", "と",
+  "な", "に", "ぬ", "ね", "の",
+  "は", "ひ", "ふ", "へ", "ほ",
+  "ま", "み", "む", "め", "も",
+  "や", "ゆ", "よ",
+  "ら", "り", "る", "れ", "ろ",
+  "わ",
+];
+
 const GOJUON_NORMALIZE_MAP = {
   "ぁ": "あ", "ぃ": "い", "ぅ": "う", "ぇ": "え", "ぉ": "お",
   "が": "か", "ぎ": "き", "ぐ": "く", "げ": "け", "ご": "こ",
@@ -338,6 +351,10 @@ function createGroupHeading(label, groupKey) {
 function renderJumpNav(inJpMode) {
   if (!dom.jumpNav) return;
   dom.jumpNav.innerHTML = "";
+  dom.jumpNav.dataset.mode = inJpMode ? "jp" : "scientific";
+
+  const keys = inJpMode
+    ? GOJUON_JUMP_ORDER
 
   const keys = inJpMode
     ? GOJUON_ORDER
