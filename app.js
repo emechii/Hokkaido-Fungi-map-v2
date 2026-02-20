@@ -498,8 +498,22 @@ function updateSearchSuggestions(rawQuery) {
       ? (sciName && jpName !== "和名なし" ? `${jpName} / ${sciName}` : jpName)
       : sciName;
 
-    matches.push({ taxon, label });
+    matches.push({
+      taxon,
+      label,
+      genusKey: extractGenus(sciName).toLocaleLowerCase("en"),
+      nameKey: sciName.toLocaleLowerCase("en"),
+      jpKey: jpName.toLocaleLowerCase("ja-JP"),
+    });
   }
+
+  matches.sort((a, b) => {
+    const genusCmp = a.genusKey.localeCompare(b.genusKey, "en");
+    if (genusCmp !== 0) return genusCmp;
+    const nameCmp = a.nameKey.localeCompare(b.nameKey, "en");
+    if (nameCmp !== 0) return nameCmp;
+    return a.jpKey.localeCompare(b.jpKey, "ja");
+  });
 
   if (matches.length === 0) {
     hideSearchSuggestions();
@@ -921,7 +935,7 @@ function renderDistribution(observations) {
     dot.setAttribute("cx", p.x.toFixed(2));
     dot.setAttribute("cy", p.y.toFixed(2));
     dot.setAttribute("r", "2.4");
-    dot.setAttribute("fill", "#8b0000");
+    dot.setAttribute("fill", "#fcf16e");
     dot.setAttribute("fill-opacity", "0.95");
     dom.distributionLayer.appendChild(dot);
   }
