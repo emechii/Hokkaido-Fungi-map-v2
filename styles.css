@@ -36,6 +36,14 @@ body {
   font-size: 0.9rem;
 }
 
+.site-note {
+  margin: 0.2rem auto 0;
+  max-width: 920px;
+  color: #7f9988;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
 
 .list-heading {
   margin: 0 0 6px;
@@ -55,7 +63,7 @@ body {
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) 1fr;
+  grid-template-columns: minmax(300px, 380px) 1fr;
   gap: 16px;
   padding: 16px;
   height: calc(100vh - 170px);
@@ -70,74 +78,184 @@ body {
 
 .sidebar {
   padding: 14px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
   min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .sidebar-top {
   flex: 0 0 auto;
 }
 
+.species-search-box {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.species-search-input {
+  width: 100%;
+  min-width: 0;
+  background: #08140e;
+  color: var(--text);
+  border: 1px solid var(--line);
+  padding: 0.28rem 0.38rem;
+  font-size: 0.62rem;
+}
+
+.species-search-input::placeholder {
+  color: #6c8f7d;
+}
+
+.species-search-button {
+  flex: 0 0 auto;
+  background: #0b1a12;
+  color: var(--text);
+  border: 1px solid var(--line);
+  padding: 0.22rem 0.48rem;
+  font-size: 0.58rem;
+  cursor: pointer;
+}
+
+
+.species-search-dropdown {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: calc(100% - 2px);
+  display: block;
+  max-height: 60vh;
+  overflow-y: auto;
+  border: 1px solid var(--line-soft);
+  background: #0a1711;
+  z-index: 20;
+}
+
+.species-search-dropdown.hidden {
+  display: none;
+}
+
+.species-suggestion-item {
+  border: 0;
+  border-bottom: 1px solid #173a29;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  padding: 0.4rem 0.46rem;
+  display: block;
+  width: 100%;
+  flex: 0 0 auto;
+  min-height: 1.7rem;
+  line-height: 1.45;
+  font-size: 0.66rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.species-suggestion-item:last-child {
+  border-bottom: 0;
+}
+
+.species-suggestion-item:hover,
+.species-suggestion-item:focus-visible {
+  background: #173a29;
+  outline: none;
+}
+
 .sidebar-list-section {
-  flex: 1 1 auto;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
 }
 
 #listTitle {
   margin: 0 0 6px;
+  font-size: 0.82rem;
+  line-height: 1.1;
 }
 
 
 .list-title-row {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 6px;
 }
 
 .jump-nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 2px;
-  max-width: 145px;
-}
-
-.jump-btn {
-  width: 14px;
-  height: 14px;
-  padding: 0;
-  font-size: 9px;
-  line-height: 1;
-  color: #8fd8ac;
-  background: transparent;
-  border: 1px solid #1f7a3f;
-  cursor: pointer;
+  display: grid;
+  gap: 0;
+  align-self: start;
 }
 
 .jump-nav[data-mode="jp"] {
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(10, 14px);
-  grid-auto-columns: 14px;
-  justify-content: end;
+  grid-template-columns: repeat(10, 20px);
+  grid-template-rows: repeat(5, 20px);
 }
 
 .jump-nav[data-mode="scientific"] {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 2px;
+  grid-template-columns: repeat(7, 20px);
+  grid-template-rows: repeat(4, 20px);
 }
 
-.toggle-row {
+.jump-btn,
+.jump-spacer {
+  width: 20px;
+  height: 20px;
+}
+
+.jump-btn {
+  padding: 0;
+  font-size: 13px;
+  line-height: 1;
+  color: #8fd8ac;
+  background: transparent;
+  border: 0.8px solid #1f7a3f;
+  cursor: pointer;
+}
+
+.jump-spacer {
+  border: 0.8px solid #1f7a3f;
+}
+
+.jump-nav[data-mode="scientific"] .jump-btn {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-style: normal;
+}
+
+.sidebar-controls {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+.quality-filter {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.toggle-buttons {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  margin-top: 2px;
 }
 
 .second-row {
@@ -160,15 +278,64 @@ body {
   border-color: #2ea156;
 }
 
+.quality-label {
+  margin: 0;
+  font-size: 0.54rem;
+  color: #86a997;
+  line-height: 1;
+}
+
+.quality-toggle-button {
+  background: #0b1a12;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0.1rem 0.34rem;
+  font-size: 0.54rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.quality-toggle-button.active {
+  background: #12311f;
+  color: var(--accent);
+  border-color: #2ea156;
+}
+
+
+.list-heading,
+.toggle-button,
+#listTitle,
+.primary-name,
+.list-item small {
+  white-space: nowrap;
+}
+
+.primary-name,
+.list-item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.primary-name {
+  font-size: 0.8rem;
+}
+
+.list-item small {
+  font-size: 0.68rem;
+}
+
 .species-list {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
+  display: block;
+  min-height: 220px;
+  height: clamp(220px, calc(100vh - 430px), 62vh);
+  max-height: 62vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 6px;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .list-item,
@@ -181,6 +348,8 @@ body {
   cursor: pointer;
   line-height: 1.35;
   border-radius: 0;
+  display: block;
+  width: 100%;
 }
 
 .genus-heading {
@@ -207,8 +376,7 @@ body {
 }
 
 .content {
-  display: flex;
-  flex-direction: column;
+  display: block;
   gap: 12px;
   min-height: 0;
   overflow: auto;
@@ -227,18 +395,36 @@ body {
   display: none;
 }
 
+.detail-lineage {
+  margin: 0 0 4px;
+  color: #88a997;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  font-family: "Times New Roman", "Times", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .sci-name {
   margin: 0;
   color: #c8f2d9;
   font-style: italic;
   font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
-  font-size: 2rem;
-  line-height: 1.2;
+  font-size: 1.6rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ja-name {
   margin-top: 6px;
   color: #93c8a7;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .scientific-text {
@@ -248,8 +434,7 @@ body {
 
 .photo-grid {
   margin-top: 8px;
-  display: flex;
-  flex-direction: column;
+  display: block;
   gap: 10px;
 }
 
@@ -268,9 +453,11 @@ body {
 .featured-photo {
   display: block;
   width: 100%;
-  height: 360px;
-  object-fit: cover;
+  aspect-ratio: 3 / 2;
+  height: auto;
+  object-fit: contain;
   object-position: center;
+  background: #060d09;
 }
 
 .photo-thumbs {
@@ -288,9 +475,11 @@ body {
 .thumb-photo {
   display: block;
   width: 100%;
-  height: 72px;
-  object-fit: cover;
+  aspect-ratio: 3 / 2;
+  height: auto;
+  object-fit: contain;
   object-position: center;
+  background: #060d09;
 }
 
 
@@ -326,6 +515,22 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.thumb-card .photo-source {
+  font-size: 0.4rem;
+  padding: 1px 3px;
+}
+
+.thumb-card .photo-source {
+  pointer-events: none;
+}
+
+.thumb-card .active-badge {
+  font-size: 0.33rem;
+  padding: 0 3px;
+  top: 2px;
+  right: 2px;
 }
 
 .obs-link-wrap {
@@ -374,6 +579,25 @@ body {
 }
 
 
+
+.map-filter-buttons {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0 6px;
+}
+
+.map-filter-button {
+  padding: 0.2rem 0.4rem;
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+.map-filter-button.active {
+  background: #12311f;
+  color: var(--accent);
+  border-color: #2ea156;
+}
+
 .distribution-summary {
   margin: 4px 0 10px;
   color: var(--muted);
@@ -403,7 +627,7 @@ body {
 
 @media (max-width: 1000px) {
   .layout {
-    grid-template-columns: minmax(185px, 42vw) 1fr;
+    grid-template-columns: minmax(150px, 34vw) 1fr;
     height: auto;
     min-height: calc(100vh - 170px);
     gap: 10px;
@@ -420,6 +644,8 @@ body {
   }
 
   .species-list {
+    min-height: 180px;
+    height: clamp(180px, calc(100vh - 390px), 55vh);
     max-height: 55vh;
   }
 
@@ -428,39 +654,363 @@ body {
   }
 
   .featured-photo {
-    height: 320px;
+    height: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .recent-observations h2 {
+    font-size: 0.78rem;
+  }
+
+  .recent-observations-subtitle {
+    font-size: 0.5rem;
+  }
+
+  .recent-credit {
+    font-size: 0.48rem;
+    padding: 1px 4px;
+  }
+
+  .recent-caption {
+    font-size: 0.3rem;
+    padding: 0.1rem 0.2rem;
+    row-gap: 0;
+  }
+
+  .site-note {
+    font-size: 0.6rem;
+    max-width: 95%;
+  }
+
+  .layout {
+    grid-template-columns: minmax(118px, 30vw) 1fr;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .sidebar {
+    padding: 8px;
+  }
+
+  .species-search-box {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px;
+    margin-bottom: 6px;
+    padding: 0;
+  }
+
+  .species-search-input {
+    padding: 0.16rem 0.22rem;
+    font-size: 0.44rem;
+  }
+
+  .species-search-button {
+    justify-self: auto;
+    width: auto;
+    max-width: 100%;
+    padding: 0.1rem 0.18rem;
+    font-size: 0.4rem;
+    white-space: nowrap;
+  }
+
+  .species-search-dropdown {
+    left: 4px;
+    right: 4px;
+    max-height: 55vh;
+  }
+
+  .species-suggestion-item {
+    font-size: 0.56rem;
+    min-height: 1.38rem;
+    line-height: 1.35;
+    padding: 0.3rem 0.34rem;
+  }
+
+  .sidebar-controls {
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .quality-filter {
+    gap: 4px;
+  }
+
+  .jump-nav[data-mode="jp"] {
+    grid-template-columns: repeat(10, 10px);
+    grid-template-rows: repeat(5, 10px);
+  }
+
+  .jump-nav[data-mode="scientific"] {
+    grid-template-columns: repeat(7, 10px);
+    grid-template-rows: repeat(4, 10px);
+  }
+
+  .jump-btn,
+  .jump-spacer {
+    width: 10px;
+    height: 10px;
+  }
+
+  .jump-btn {
+    font-size: 8px;
+  }
+
+  .toggle-button {
+    padding: 0.18rem 0.3rem;
+    font-size: 0.58rem;
+  }
+
+  .quality-label {
+    font-size: 0.42rem;
+  }
+
+  .quality-toggle-button {
+    font-size: 0.44rem;
+    padding: 0.08rem 0.24rem;
+  }
+
+  .list-heading {
+    font-size: 0.52rem;
+  }
+
+  #listTitle {
+    font-size: 0.56rem;
+  }
+
+  .primary-name {
+    font-size: 0.58rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .list-item small {
+    font-size: 0.5rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.15;
+    word-break: break-word;
+  }
+
+  .species-list {
+    font-size: 0.68rem;
+  }
+
+  .sci-name {
+    font-size: 0.92rem;
+  }
+
+  .ja-name {
+    font-size: 0.52rem;
+  }
+
+  .detail-lineage {
+    font-size: 0.44rem;
+  }
+
+  .seasonality-section h3,
+  .meta-grid,
+  .distribution-summary,
+  .obs-link-button,
+  .home-button {
+    font-size: 0.52rem;
+  }
+
+  .map-filter-buttons {
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .map-filter-button {
+    font-size: 0.44rem;
+    padding: 0.12rem 0.22rem;
+  }
+
+  .photo-source {
+    font-size: 0.46rem;
+    padding: 1px 4px;
+  }
+
+  .thumb-card .photo-source {
+    font-size: 0.32rem;
+    padding: 0 2px;
+  }
+
+  .thumb-card .active-badge {
+    font-size: 0.24rem;
+    padding: 0 2px;
+  }
+
+  .meta-grid {
+    gap: 6px;
+  }
+
+  .meta-grid div {
+    padding: 6px;
+  }
+
+  .featured-photo,
+  .thumb-photo,
+  .recent-slide img {
+    aspect-ratio: 3 / 2;
+    object-fit: contain;
+    height: auto;
   }
 }
 
 
 .species-list,
-.content {
+.content,
+.species-search-dropdown {
   scrollbar-width: thin;
   scrollbar-color: #39b268 #0b1a12;
 }
 
 .species-list::-webkit-scrollbar,
-.content::-webkit-scrollbar {
+.content::-webkit-scrollbar,
+.species-search-dropdown::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
 
 .species-list::-webkit-scrollbar-track,
-.content::-webkit-scrollbar-track {
+.content::-webkit-scrollbar-track,
+.species-search-dropdown::-webkit-scrollbar-track {
   background: #0b1a12;
   border: 1px solid #1f7a3f;
 }
 
 .species-list::-webkit-scrollbar-thumb,
-.content::-webkit-scrollbar-thumb {
+.content::-webkit-scrollbar-thumb,
+.species-search-dropdown::-webkit-scrollbar-thumb {
   background: #1f7a3f;
   border: 2px solid #0b1a12;
 }
 
 .species-list::-webkit-scrollbar-button,
-.content::-webkit-scrollbar-button {
+.content::-webkit-scrollbar-button,
+.species-search-dropdown::-webkit-scrollbar-button {
   display: block;
   height: 12px;
   background: #0f2a1c;
   border: 1px solid #1f7a3f;
+}
+
+.recent-observations {
+  padding: 1rem;
+}
+
+.recent-observations h2 {
+  margin: 0;
+  color: #c8f2d9;
+  font-size: 1rem;
+}
+
+.recent-observations-subtitle {
+  margin-top: 0.2rem;
+  margin-bottom: 0.6rem;
+  color: var(--muted);
+  font-size: 0.64rem;
+}
+
+.recent-slideshow {
+  position: relative;
+  border: 1px solid var(--line-soft);
+  background: #07100b;
+  min-height: 0;
+}
+
+.recent-empty {
+  margin: 0;
+  padding: 1rem;
+  color: var(--muted);
+}
+
+.recent-slide {
+  display: none;
+}
+
+.recent-slide.active {
+  display: block;
+}
+
+.recent-slide a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.recent-slide img {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  height: auto;
+  object-fit: contain;
+  background: #060d09;
+  display: block;
+}
+
+.recent-image-wrap {
+  position: relative;
+}
+
+.recent-credit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2px 6px;
+  font-size: 0.62rem;
+  background: rgba(0, 0, 0, 0.55);
+  color: #bceccd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-caption {
+  padding: 0.14rem 0.36rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.54rem;
+  color: #b8dcc6;
+  display: grid;
+  grid-template-rows: auto auto;
+  row-gap: 1px;
+}
+
+.recent-date,
+.recent-taxon {
+  margin: 0;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-taxon {
+  color: #9ed9b5;
+}
+
+@media (max-width: 760px) {
+  .recent-observations h2 {
+    font-size: 0.78rem;
+  }
+
+  .recent-observations-subtitle {
+    font-size: 0.5rem;
+  }
+
+  .recent-credit {
+    font-size: 0.48rem;
+    padding: 1px 4px;
+  }
+
+  .recent-caption {
+    font-size: 0.3rem;
+    padding: 0.1rem 0.2rem;
+    row-gap: 0;
+  }
 }

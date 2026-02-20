@@ -10,6 +10,9 @@ const FEATURED_PHOTO_COUNT = 1;
 const THUMBNAIL_GRID_TOTAL = 14;
 const OBS_PER_PAGE = 200;
 const MAX_OBS_PAGES = 3;
+const RECENT_OBS_SLIDES = 5;
+const RECENT_OBS_FETCH = 30;
+const RECENT_SLIDE_INTERVAL_MS = 4000;
 
 const DEFAULT_BOUNDS = { minLon: 139.2, maxLon: 146.4, minLat: 41.2, maxLat: 45.9 };
 const MAP_CANVAS = { x: 20, y: 20, width: 560, height: 320 };
@@ -27,17 +30,12 @@ const GOJUON_ORDER = [
   "わ", "を", "ん",
 ];
 
-const GOJUON_JUMP_ORDER = [
-  "あ", "い", "う", "え", "お",
-  "か", "き", "く", "け", "こ",
-  "さ", "し", "す", "せ", "そ",
-  "た", "ち", "つ", "て", "と",
-  "な", "に", "ぬ", "ね", "の",
-  "は", "ひ", "ふ", "へ", "ほ",
-  "ま", "み", "む", "め", "も",
-  "や", "ゆ", "よ",
-  "ら", "り", "る", "れ", "ろ",
-  "わ",
+const GOJUON_JUMP_GRID = [
+  ["わ", "ら", "や", "ま", "は", "な", "た", "さ", "か", "あ"],
+  ["", "り", "", "み", "ひ", "に", "ち", "し", "き", "い"],
+  ["を", "る", "ゆ", "む", "ふ", "ぬ", "つ", "す", "く", "う"],
+  ["", "れ", "", "め", "へ", "ね", "て", "せ", "け", "え"],
+  ["ん", "ろ", "よ", "も", "ほ", "の", "と", "そ", "こ", "お"],
 ];
 
 const GOJUON_NORMALIZE_MAP = {
@@ -49,6 +47,13 @@ const GOJUON_NORMALIZE_MAP = {
   "ぱ": "は", "ぴ": "ひ", "ぷ": "ふ", "ぺ": "へ", "ぽ": "ほ",
   "ゃ": "や", "ゅ": "ゆ", "ょ": "よ", "ゎ": "わ", "ゔ": "う",
 };
+
+const SCIENTIFIC_JUMP_GRID = [
+  ["A", "B", "C", "D", "E", "F", "G"],
+  ["H", "I", "J", "K", "L", "M", "N"],
+  ["O", "P", "Q", "R", "S", "T", "U"],
+  ["V", "W", "X", "Y", "Z", "", ""],
+];
 
 const EMBEDDED_LOCAL_SPECIES = [
   { id: 47170, name: "Amanita muscaria", preferred_common_name: "ベニテングタケ", count: 12 },
@@ -68,11 +73,17 @@ const EMBEDDED_LOCAL_SPECIES = [
 const state = {
   projectId: null,
   species: [],
+  allSpecies: [],
+  researchSpecies: [],
+  filterResearchOnly: false,
   currentMode: "jp", // jp: 和名表示(五十音順) / scientific: 学名表示(アルファベット順)
   selectedTaxonId: null,
   mapBounds: { ...DEFAULT_BOUNDS },
   mapProjection: computeMapProjection(DEFAULT_BOUNDS),
   listScrollByMode: { jp: 0, scientific: 0 },
+  recentSlideshowTimer: null,
+  currentObservations: [],
+  mapResearchOnly: false,
 };
 
 const dom = {
@@ -81,7 +92,10 @@ const dom = {
   speciesCount: document.getElementById("speciesCount"),
   jumpNav: document.getElementById("jumpNav"),
   content: document.querySelector(".content"),
+  recentObsCard: document.getElementById("recentObsCard"),
+  recentObsSlideshow: document.getElementById("recentObsSlideshow"),
   detailCard: document.getElementById("detailCard"),
+  detailLineage: document.getElementById("detailLineage"),
   detailJaName: document.getElementById("detailJaName"),
   detailSciName: document.getElementById("detailSciName"),
   photoGrid: document.getElementById("photoGrid"),
@@ -91,9 +105,17 @@ const dom = {
   metaUpdated: document.getElementById("metaUpdated"),
   distributionSummary: document.getElementById("distributionSummary"),
   distributionLayer: document.getElementById("distributionLayer"),
+  mapShowAllBtn: document.getElementById("mapShowAllBtn"),
+  mapShowResearchBtn: document.getElementById("mapShowResearchBtn"),
   hokkaidoOutline: document.getElementById("hokkaidoOutline"),
+  northernTerritoriesOutline: document.getElementById("northernTerritoriesOutline"),
   jpModeBtn: document.getElementById("jpSortBtn"),
   scientificModeBtn: document.getElementById("scientificSortBtn"),
+  researchOnlyToggle: document.getElementById("researchOnlyToggle"),
+  speciesSearchInput: document.getElementById("speciesSearchInput"),
+  speciesSearchBtn: document.getElementById("speciesSearchBtn"),
+  speciesSearchDropdown: document.getElementById("speciesSearchDropdown"),
+  speciesSearchBox: document.querySelector(".species-search-box"),
   homeBtn: document.getElementById("homeBtn"),
   obsLinkBtn: document.getElementById("obsLinkBtn"),
   seasonalityChart: document.getElementById("seasonalityChart"),
@@ -106,9 +128,11 @@ initialize().catch((error) => {
 
 async function initialize() {
   wireEvents();
+  dom.detailCard?.classList.add("hidden");
+  dom.recentObsCard?.classList.remove("hidden");
 
   // プレビュー（file://）でも最低限一覧が見えるよう、埋め込み種データを先に描画。
-  state.species = normalizeSpeciesArray(EMBEDDED_LOCAL_SPECIES);
+  setSpeciesData(normalizeSpeciesArray(EMBEDDED_LOCAL_SPECIES));
   if (state.species.length > 0) {
     renderSpeciesList();
     setStatus(`埋め込みデータから ${state.species.length} 種を表示中...`);
@@ -117,7 +141,7 @@ async function initialize() {
   let loadedFromDb = false;
   const dbSpecies = await loadSpeciesFromIndexedDB();
   if (dbSpecies.length > 0) {
-    state.species = dbSpecies;
+    setSpeciesData(dbSpecies);
     loadedFromDb = true;
     renderSpeciesList();
     setStatus(`ローカルDBから ${dbSpecies.length} 種を表示中。最新データを確認します...`);
@@ -125,7 +149,7 @@ async function initialize() {
 
   const localSpecies = await loadLocalSpecies();
   if (!loadedFromDb && localSpecies.length > 0) {
-    state.species = localSpecies;
+    setSpeciesData(localSpecies);
     renderSpeciesList();
     setStatus(`ローカルデータから ${localSpecies.length} 種を表示中。最新データを確認します...`);
   }
@@ -138,15 +162,18 @@ async function initialize() {
     setStatus("iNaturalist プロジェクト情報を取得しています...");
     state.projectId = await fetchProjectIdBySlug(PROJECT_SLUG);
 
+    await loadRecentObservationsSlideshow(state.projectId);
+
     setStatus("北海道の菌類種一覧を取得しています...");
     const remoteSpecies = await fetchAllSpecies(state.projectId);
     if (remoteSpecies.length > 0) {
-      state.species = remoteSpecies;
+      setSpeciesData(remoteSpecies);
       saveSpeciesCache(remoteSpecies);
       await saveSpeciesToIndexedDB(remoteSpecies);
     }
   } catch (error) {
     console.warn("オンライン取得に失敗したためローカル一覧を使用します", error);
+    await loadRecentObservationsSlideshow(null);
   }
 
   if (state.species.length === 0) {
@@ -273,40 +300,282 @@ async function saveSpeciesToIndexedDB(species) {
 }
 
 function wireEvents() {
-  dom.speciesList.addEventListener("scroll", () => {
-    state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+  if (dom.speciesList) {
+    dom.speciesList.addEventListener("scroll", () => {
+      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+    });
+  }
+
+  if (dom.jpModeBtn && dom.speciesList) {
+    dom.jpModeBtn.addEventListener("click", () => {
+      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+      state.currentMode = "jp";
+      updateToggleState();
+      renderSpeciesList();
+    });
+  }
+
+  if (dom.scientificModeBtn && dom.speciesList) {
+    dom.scientificModeBtn.addEventListener("click", () => {
+      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+      state.currentMode = "scientific";
+      updateToggleState();
+      renderSpeciesList();
+    });
+  }
+
+
+  if (dom.researchOnlyToggle) {
+    dom.researchOnlyToggle.addEventListener("click", async () => {
+      const next = !state.filterResearchOnly;
+
+      if (next && !state.projectId) {
+        setStatus("オフライン表示中のため研究グレード絞り込みは利用できません。");
+        state.filterResearchOnly = false;
+        updateResearchToggleState();
+        return;
+      }
+
+      if (next && state.researchSpecies.length === 0 && state.projectId) {
+        setStatus("研究グレード種一覧を取得しています...");
+        try {
+          const researchSpecies = await fetchAllSpecies(state.projectId, true);
+          state.researchSpecies = researchSpecies;
+        } catch (error) {
+          console.warn("研究グレード種一覧の取得に失敗", error);
+          setStatus("研究グレード一覧の取得に失敗しました。通常一覧を表示します。");
+          state.filterResearchOnly = false;
+          updateResearchToggleState();
+          return;
+        }
+      }
+
+      state.filterResearchOnly = next;
+      applySpeciesFilter();
+      updateResearchToggleState();
+      renderSpeciesList();
+      const modeLabel = state.filterResearchOnly ? "研究グレード" : "全件";
+      setStatus(`${modeLabel}一覧を表示中（${state.species.length}種）。`);
+    });
+  }
+
+  if (dom.speciesSearchBtn) {
+    dom.speciesSearchBtn.addEventListener("click", () => {
+      performSpeciesSearch(dom.speciesSearchInput?.value || "").catch((error) => {
+        console.error(error);
+        setStatus("検索処理でエラーが発生しました。");
+      });
+    });
+  }
+
+  if (dom.speciesSearchInput) {
+    dom.speciesSearchInput.addEventListener("input", () => {
+      updateSearchSuggestions(dom.speciesSearchInput.value || "");
+    });
+
+    dom.speciesSearchInput.addEventListener("focus", () => {
+      updateSearchSuggestions(dom.speciesSearchInput.value || "");
+    });
+
+    dom.speciesSearchInput.addEventListener("blur", () => {
+      setTimeout(hideSearchSuggestions, 120);
+    });
+
+    dom.speciesSearchInput.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        hideSearchSuggestions();
+        return;
+      }
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      hideSearchSuggestions();
+      performSpeciesSearch(dom.speciesSearchInput.value || "").catch((error) => {
+        console.error(error);
+        setStatus("検索処理でエラーが発生しました。");
+      });
+    });
+  }
+
+  document.addEventListener("click", (event) => {
+    if (!dom.speciesSearchBox) return;
+    if (dom.speciesSearchBox.contains(event.target)) return;
+    hideSearchSuggestions();
   });
 
-  dom.jpModeBtn.addEventListener("click", () => {
-    state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
-    state.currentMode = "jp";
-    updateToggleState();
-    renderSpeciesList();
-  });
+  if (dom.mapShowAllBtn) {
+    dom.mapShowAllBtn.addEventListener("click", () => {
+      state.mapResearchOnly = false;
+      updateMapFilterButtons();
+      renderDistribution(state.currentObservations);
+    });
+  }
 
-  dom.scientificModeBtn.addEventListener("click", () => {
-    state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
-    state.currentMode = "scientific";
-    updateToggleState();
-    renderSpeciesList();
-  });
+  if (dom.mapShowResearchBtn) {
+    dom.mapShowResearchBtn.addEventListener("click", () => {
+      state.mapResearchOnly = true;
+      updateMapFilterButtons();
+      renderDistribution(state.currentObservations);
+    });
+  }
 
-  dom.homeBtn.addEventListener("click", () => {
-    state.selectedTaxonId = null;
-    dom.detailCard.classList.add("hidden");
-    dom.distributionLayer.innerHTML = "";
-    renderSpeciesList();
-    setStatus(`${state.species.length}種を取得しました。左側の一覧から選択してください。`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
+  if (dom.homeBtn) {
+    dom.homeBtn.addEventListener("click", () => {
+      state.selectedTaxonId = null;
+      dom.detailCard?.classList.add("hidden");
+      dom.recentObsCard?.classList.remove("hidden");
+      if (dom.distributionLayer) dom.distributionLayer.innerHTML = "";
+      renderSpeciesList();
+      setStatus(`${state.species.length}種を取得しました。左側の一覧から選択してください。`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
 }
 
 function updateToggleState() {
-  dom.jpModeBtn.classList.toggle("active", state.currentMode === "jp");
-  dom.scientificModeBtn.classList.toggle("active", state.currentMode === "scientific");
+  dom.jpModeBtn?.classList.toggle("active", state.currentMode === "jp");
+  dom.scientificModeBtn?.classList.toggle("active", state.currentMode === "scientific");
+  updateResearchToggleState();
+  updateMapFilterButtons();
+}
+
+function setSpeciesData(species, asResearch = false) {
+  const normalized = normalizeSpeciesArray(species);
+  if (asResearch) {
+    state.researchSpecies = normalized;
+  } else {
+    state.allSpecies = normalized;
+  }
+  applySpeciesFilter();
+}
+
+function applySpeciesFilter() {
+  state.species = state.filterResearchOnly ? [...state.researchSpecies] : [...state.allSpecies];
+}
+
+function updateResearchToggleState() {
+  if (!dom.researchOnlyToggle) return;
+  dom.researchOnlyToggle.classList.toggle("active", state.filterResearchOnly);
+  dom.researchOnlyToggle.textContent = state.filterResearchOnly ? "ON" : "OFF";
+}
+
+function updateMapFilterButtons() {
+  dom.mapShowAllBtn?.classList.toggle("active", !state.mapResearchOnly);
+  dom.mapShowResearchBtn?.classList.toggle("active", state.mapResearchOnly);
+}
+
+function normalizeSearchText(text) {
+  return toHiragana((text || "").trim()).toLocaleLowerCase("ja-JP");
+}
+
+function hideSearchSuggestions() {
+  if (!dom.speciesSearchDropdown) return;
+  dom.speciesSearchDropdown.classList.add("hidden");
+  dom.speciesSearchDropdown.innerHTML = "";
+}
+
+function updateSearchSuggestions(rawQuery) {
+  if (!dom.speciesSearchDropdown) return;
+  const query = normalizeSearchText(rawQuery || "");
+  dom.speciesSearchDropdown.innerHTML = "";
+
+  if (!query) {
+    hideSearchSuggestions();
+    return;
+  }
+
+  const matches = [];
+  for (const taxon of state.species) {
+    const jpName = (taxon.japaneseName || "").trim();
+    const sciName = (taxon.name || "").trim();
+    const jpNorm = normalizeSearchText(jpName);
+    const sciNorm = normalizeSearchText(sciName);
+
+    const jpMatched = jpNorm.includes(query);
+    const sciMatched = sciNorm.includes(query);
+    if (!jpMatched && !sciMatched) continue;
+
+    const label = jpMatched
+      ? (sciName && jpName !== "和名なし" ? `${jpName} / ${sciName}` : jpName)
+      : sciName;
+
+    matches.push({
+      taxon,
+      label,
+      genusKey: extractGenus(sciName).toLocaleLowerCase("en"),
+      nameKey: sciName.toLocaleLowerCase("en"),
+      jpKey: jpName.toLocaleLowerCase("ja-JP"),
+    });
+  }
+
+  matches.sort((a, b) => {
+    const genusCmp = a.genusKey.localeCompare(b.genusKey, "en");
+    if (genusCmp !== 0) return genusCmp;
+    const nameCmp = a.nameKey.localeCompare(b.nameKey, "en");
+    if (nameCmp !== 0) return nameCmp;
+    return a.jpKey.localeCompare(b.jpKey, "ja");
+  });
+
+  if (matches.length === 0) {
+    hideSearchSuggestions();
+    return;
+  }
+
+  for (const match of matches) {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "species-suggestion-item";
+    item.textContent = match.label;
+    item.setAttribute("role", "option");
+    item.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
+    item.addEventListener("click", () => {
+      if (dom.speciesSearchInput) dom.speciesSearchInput.value = match.label;
+      hideSearchSuggestions();
+      selectTaxon(match.taxon).then(() => {
+        setStatus(`検索結果: ${match.taxon.japaneseName} / ${match.taxon.name}`);
+      }).catch((error) => {
+        console.error(error);
+        setStatus("検索処理でエラーが発生しました。");
+      });
+    });
+    dom.speciesSearchDropdown.appendChild(item);
+  }
+
+  dom.speciesSearchDropdown.classList.remove("hidden");
+}
+
+async function performSpeciesSearch(rawQuery) {
+  const query = (rawQuery || "").trim();
+  if (!query) {
+    setStatus("検索語を入力してください。");
+    dom.speciesSearchInput?.focus();
+    return;
+  }
+
+  const q = normalizeSearchText(query);
+  const findMatch = (predicate) => state.species.find((taxon) => {
+    const jp = normalizeSearchText(taxon.japaneseName || "");
+    const sci = normalizeSearchText(taxon.name || "");
+    return predicate(jp, sci);
+  });
+
+  const matched =
+    findMatch((jp, sci) => jp === q || sci === q) ||
+    findMatch((jp, sci) => jp.startsWith(q) || sci.startsWith(q)) ||
+    findMatch((jp, sci) => jp.includes(q) || sci.includes(q));
+
+  if (!matched) {
+    setStatus(`「${query}」に一致する種が見つかりませんでした。`);
+    return;
+  }
+
+  await selectTaxon(matched);
+  setStatus(`検索結果: ${matched.japaneseName} / ${matched.name}`);
 }
 
 function renderSpeciesList() {
+  if (!dom.speciesList || !dom.listTitle) return;
   dom.speciesList.innerHTML = "";
 
   const inJpMode = state.currentMode === "jp";
@@ -315,7 +584,9 @@ function renderSpeciesList() {
 
   const sorted = [...state.species].sort((a, b) => {
     if (inJpMode) {
-      return a.japaneseName.localeCompare(b.japaneseName, "ja");
+      const aJp = (a.japaneseName || a.name || "").trim();
+      const bJp = (b.japaneseName || b.name || "").trim();
+      return aJp.localeCompare(bJp, "ja");
     }
 
     const aSci = (a.name || "").toLocaleLowerCase("en");
@@ -353,20 +624,24 @@ function renderJumpNav(inJpMode) {
   dom.jumpNav.innerHTML = "";
   dom.jumpNav.dataset.mode = inJpMode ? "jp" : "scientific";
 
-  const keys = inJpMode
-    ? GOJUON_JUMP_ORDER
+  const grid = inJpMode ? GOJUON_JUMP_GRID : SCIENTIFIC_JUMP_GRID;
+  for (const row of grid) {
+    for (const key of row) {
+      if (!key) {
+        const spacer = document.createElement("span");
+        spacer.className = "jump-spacer";
+        spacer.setAttribute("aria-hidden", "true");
+        dom.jumpNav.appendChild(spacer);
+        continue;
+      }
 
-  const keys = inJpMode
-    ? GOJUON_ORDER
-    : Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
-
-  for (const key of keys) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "jump-btn";
-    btn.textContent = key;
-    btn.addEventListener("click", () => scrollToGroup(key));
-    dom.jumpNav.appendChild(btn);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "jump-btn";
+      btn.textContent = key;
+      btn.addEventListener("click", () => scrollToGroup(key));
+      dom.jumpNav.appendChild(btn);
+    }
   }
 }
 
@@ -399,8 +674,10 @@ function createListButton(taxon) {
   button.type = "button";
 
   const inJpMode = state.currentMode === "jp";
-  const primary = inJpMode ? taxon.japaneseName : taxon.name;
-  const secondary = inJpMode ? taxon.name : taxon.japaneseName;
+  const primaryRaw = inJpMode ? taxon.japaneseName : taxon.name;
+  const secondaryRaw = inJpMode ? taxon.name : taxon.japaneseName;
+  const primary = (primaryRaw || "-").trim() || "-";
+  const secondary = (secondaryRaw || "-").trim() || "-";
 
   const primaryEl = document.createElement("span");
   primaryEl.className = `primary-name${inJpMode ? "" : " scientific-text"}`;
@@ -429,27 +706,34 @@ function createListButton(taxon) {
 
 async function selectTaxon(taxon) {
   state.selectedTaxonId = taxon.id;
+  state.mapResearchOnly = false;
+  updateMapFilterButtons();
   renderSpeciesList();
 
   dom.detailCard.classList.remove("hidden");
+  dom.recentObsCard?.classList.add("hidden");
   dom.detailSciName.textContent = taxon.name;
   dom.detailJaName.textContent = taxon.japaneseName === "和名なし" ? "" : taxon.japaneseName;
+  if (dom.detailLineage) dom.detailLineage.textContent = "分類情報を取得中...";
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (dom.content) dom.content.scrollTo({ top: 0, behavior: "smooth" });
   dom.metaGenus.textContent = extractGenus(taxon.name);
-  dom.metaFamily.textContent = await familyNameFromTaxon(taxon.id);
+  const classification = await classificationFromTaxon(taxon.id, taxon.name);
+  dom.metaFamily.textContent = classification.family;
+  if (dom.detailLineage) dom.detailLineage.textContent = classification.label;
   dom.metaObsCount.textContent = String(taxon.count || "-");
   dom.metaUpdated.textContent = new Date().toLocaleDateString("ja-JP");
   dom.photoGrid.innerHTML = "<p>観察記録を読み込み中...</p>";
   dom.distributionSummary.textContent = "分布ポイントを読み込み中...";
   dom.distributionLayer.innerHTML = "";
-  renderSeasonality(Array(12).fill(0));
+  state.currentObservations = [];
+  renderSeasonality({ research: Array(12).fill(0), nonResearch: Array(12).fill(0) });
 
   const observations = state.projectId ? await fetchObservationsForTaxon(taxon.id) : [];
+  state.currentObservations = observations;
   renderPhotos(taxon, observations);
   renderDistribution(observations);
-  const monthlyCounts = state.projectId ? await fetchMonthlySeasonality(taxon.id) : countsFromObservations(observations);
-  renderSeasonality(monthlyCounts);
+  renderSeasonality(countsByQualityFromObservations(observations));
 
   if (!state.projectId) {
     dom.distributionSummary.textContent = "ローカル表示中のため分布ポイント取得はスキップしました。";
@@ -471,7 +755,7 @@ function renderPhotos(taxon, observations) {
       const isResearch = obs.quality_grade === "research";
       const score = (isResearch ? 1000 : 0) + faves * 10;
       return (obs.photos || []).map((photo) => ({
-        imageUrl: photo.url?.replace("square", "medium"),
+        imageUrl: photo.url?.replace("square", "large"),
         obsUrl,
         userName,
         score,
@@ -558,15 +842,17 @@ function createPhotoCard(item, isFeatured, isActive = false, clickable = false, 
   img.className = isFeatured ? "featured-photo" : "thumb-photo";
 
   if (clickable && typeof onThumbClick === "function") {
-    img.classList.add("thumb-clickable");
-    img.addEventListener("click", onThumbClick);
+    card.classList.add("thumb-clickable");
+    card.addEventListener("click", onThumbClick);
   }
 
-  const source = document.createElement("a");
+  const source = isFeatured ? document.createElement("a") : document.createElement("span");
   source.className = "photo-source";
-  source.href = item.obsUrl;
-  source.target = "_blank";
-  source.rel = "noopener noreferrer";
+  if (isFeatured) {
+    source.href = item.obsUrl;
+    source.target = "_blank";
+    source.rel = "noopener noreferrer";
+  }
   const licenseText = item.licenseCode ? ` (${item.licenseCode})` : "";
   source.textContent = `© ${item.userName}${licenseText}`;
 
@@ -584,23 +870,44 @@ function createPhotoCard(item, isFeatured, isActive = false, clickable = false, 
 }
 
 function renderDistribution(observations) {
+  if (!dom.distributionLayer || !dom.distributionSummary) return;
   dom.distributionLayer.innerHTML = "";
 
-  const projectedPoints = observations
-    .map((obs) => obs.geojson?.coordinates)
-    .filter((coords) => Array.isArray(coords) && coords.length === 2)
-    .map(([lon, lat]) => projectLonLatToMap(lon, lat, state.mapProjection))
-    .filter(Boolean);
+  const filtered = (observations || []).filter((obs) => {
+    if (!state.mapResearchOnly) return true;
+    return obs?.quality_grade === "research";
+  });
 
-  if (projectedPoints.length === 0) {
+  const withCoords = filtered
+    .map((obs) => ({ obs, coords: obs?.geojson?.coordinates }))
+    .filter((entry) => Array.isArray(entry.coords) && entry.coords.length === 2)
+    .map((entry) => ({
+      obs: entry.obs,
+      point: projectLonLatToMap(entry.coords[0], entry.coords[1], state.mapProjection),
+    }))
+    .filter((entry) => entry.point);
+
+  if (withCoords.length === 0) {
     dom.distributionSummary.textContent = "座標付き観察が見つかりませんでした。";
     return;
   }
 
+  const precisePoints = [];
+  const fuzzyPoints = [];
+  for (const entry of withCoords) {
+    const geoprivacy = (entry.obs?.geoprivacy || "").toLowerCase();
+    const isFuzzy = entry.obs?.obscured === true || geoprivacy === "obscured" || geoprivacy === "private";
+    if (isFuzzy) {
+      fuzzyPoints.push(entry.point);
+    } else {
+      precisePoints.push(entry.point);
+    }
+  }
+
+  // 不明瞭座標は従来どおり薄い赤丸
   const grid = new Map();
   const cellSize = 5;
-
-  for (const p of projectedPoints) {
+  for (const p of fuzzyPoints) {
     const gx = Math.round(p.x / cellSize);
     const gy = Math.round(p.y / cellSize);
     const key = `${gx},${gy}`;
@@ -612,13 +919,11 @@ function renderDistribution(observations) {
     }
   }
 
-  const cells = [...grid.values()];
-  const maxCount = Math.max(...cells.map((c) => c.count));
-
-  for (const cell of cells) {
-    const intensity = cell.count / maxCount;
+  const fuzzyCells = [...grid.values()];
+  const maxFuzzy = Math.max(1, ...fuzzyCells.map((c) => c.count));
+  for (const cell of fuzzyCells) {
+    const intensity = cell.count / maxFuzzy;
     const radius = 7 + Math.sqrt(cell.count) * 2.2;
-
     const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     halo.setAttribute("cx", String(cell.x));
     halo.setAttribute("cy", String(cell.y));
@@ -626,56 +931,62 @@ function renderDistribution(observations) {
     halo.setAttribute("fill", "#ff4d4d");
     halo.setAttribute("fill-opacity", String(0.1 + intensity * 0.22));
     dom.distributionLayer.appendChild(halo);
-
   }
 
-  dom.distributionSummary.textContent = `座標付き観察 ${projectedPoints.length}件（表示点 ${cells.length}）`;
+  // 公開座標は濃い赤い点
+  for (const p of precisePoints) {
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    dot.setAttribute("cx", p.x.toFixed(2));
+    dot.setAttribute("cy", p.y.toFixed(2));
+    dot.setAttribute("r", "2.4");
+    dot.setAttribute("fill", "#fcf16e");
+    dot.setAttribute("fill-opacity", "0.95");
+    dom.distributionLayer.appendChild(dot);
+  }
+
+  const modeLabel = state.mapResearchOnly ? "研究データのみ" : "全記録";
+  dom.distributionSummary.textContent = `${modeLabel}: 公開座標 ${precisePoints.length}件 / 不明瞭座標 ${fuzzyPoints.length}件`;
 }
 
 async function loadHokkaidoOutlineFromINat() {
   try {
-    const geometry = await fetchHokkaidoGeometryFromINat();
-    if (!geometry) return;
+    const [hokkaidoGeometry, kurilGeometry] = await Promise.all([
+      fetchPlaceGeometryById(13078), // Hokkaido, JP
+      fetchPlaceGeometryById(49474), // Kuril'skiy rayon, RU
+    ]);
 
-    const polygon = chooseLargestPolygon(geometry);
-    if (!polygon || polygon.length < 3) return;
+    const hokkaidoRings = extractOuterRings(hokkaidoGeometry).filter((ring) => ring.length >= 3);
+    const northernRings = filterNorthernTerritoriesRings(extractOuterRings(kurilGeometry));
 
-    const bounds = boundsFromCoordinates(polygon);
+    const allRings = [...hokkaidoRings, ...northernRings];
+    if (allRings.length === 0) return;
+
+    const allCoordinates = allRings.flat();
+    const bounds = boundsFromCoordinates(allCoordinates);
     state.mapBounds = expandBounds(bounds, 0.08);
     const referenceLat = (bounds.minLat + bounds.maxLat) / 2;
     state.mapProjection = computeMapProjection(state.mapBounds, referenceLat);
 
-    const path = buildSvgPathFromLonLat(polygon, state.mapProjection);
-    if (path) {
-      dom.hokkaidoOutline.setAttribute("d", path);
+    const hokkaidoPaths = hokkaidoRings
+      .map((ring) => buildSvgPathFromLonLat(ring, state.mapProjection))
+      .filter(Boolean);
+    if (hokkaidoPaths.length > 0 && dom.hokkaidoOutline) {
+      dom.hokkaidoOutline.setAttribute("d", hokkaidoPaths.join(" "));
+    }
+
+    const northernPaths = northernRings
+      .map((ring) => buildSvgPathFromLonLat(ring, state.mapProjection))
+      .filter(Boolean);
+    if (dom.northernTerritoriesOutline) {
+      dom.northernTerritoriesOutline.setAttribute("d", northernPaths.join(" "));
     }
   } catch (error) {
-    console.warn("北海道境界の取得に失敗したため既定形状を使用します", error);
+    console.warn("北海道/北方領土境界の取得に失敗したため既定形状を使用します", error);
   }
 }
 
-async function fetchHokkaidoGeometryFromINat() {
-  const candidates = [];
-  for (const query of ["北海道", "Hokkaido"]) {
-    const autocompleteUrl = new URL(`${API_BASE}/places/autocomplete`);
-    autocompleteUrl.searchParams.set("q", query);
-    autocompleteUrl.searchParams.set("locale", "ja");
-
-    const autocompleteRes = await fetchWithTimeout(autocompleteUrl, {}, 8000);
-    if (!autocompleteRes.ok) continue;
-
-    const autocompleteData = await autocompleteRes.json();
-    candidates.push(...(autocompleteData.results || []));
-  }
-
-  if (candidates.length === 0) return null;
-
-  const preferred =
-    candidates.find((c) => /北海道/.test(c.display_name || c.name || "")) ||
-    candidates.find((c) => /Hokkaido/i.test(c.display_name || c.name || "")) ||
-    candidates[0];
-
-  const placeUrl = new URL(`${API_BASE}/places/${preferred.id}`);
+async function fetchPlaceGeometryById(placeId) {
+  const placeUrl = new URL(`${API_BASE}/places/${placeId}`);
   placeUrl.searchParams.set("locale", "ja");
 
   const placeRes = await fetchWithTimeout(placeUrl, {}, 8000);
@@ -683,6 +994,45 @@ async function fetchHokkaidoGeometryFromINat() {
 
   const placeData = await placeRes.json();
   return placeData?.results?.[0]?.geometry_geojson || null;
+}
+
+function extractOuterRings(geometry) {
+  if (!geometry) return [];
+
+  if (geometry.type === "Polygon") {
+    return geometry.coordinates?.[0] ? [geometry.coordinates[0]] : [];
+  }
+
+  if (geometry.type === "MultiPolygon") {
+    return (geometry.coordinates || [])
+      .map((polygon) => polygon?.[0])
+      .filter((ring) => Array.isArray(ring) && ring.length >= 3);
+  }
+
+  return [];
+}
+
+function filterNorthernTerritoriesRings(rings) {
+  if (!Array.isArray(rings)) return [];
+
+  // 南千島（国後・択捉・色丹・歯舞）付近に限定して北方領土として表示
+  return rings.filter((ring) => {
+    const center = ringCentroid(ring);
+    if (!center) return false;
+    const [lon, lat] = center;
+    return lon >= 145 && lon <= 149.2 && lat >= 43 && lat <= 46;
+  });
+}
+
+function ringCentroid(ring) {
+  if (!Array.isArray(ring) || ring.length === 0) return null;
+  let lon = 0;
+  let lat = 0;
+  for (const point of ring) {
+    lon += Number(point?.[0] || 0);
+    lat += Number(point?.[1] || 0);
+  }
+  return [lon / ring.length, lat / ring.length];
 }
 
 function chooseLargestPolygon(geometry) {
@@ -829,20 +1179,28 @@ function updateSpeciesCount() {
   dom.speciesCount.textContent = `${state.species.length}種`;
 }
 
-function countsFromObservations(observations) {
-  const counts = Array(12).fill(0);
+function countsByQualityFromObservations(observations) {
+  const research = Array(12).fill(0);
+  const nonResearch = Array(12).fill(0);
   for (const obs of observations) {
     const month = obs?.observed_on_details?.month;
-    if (Number.isInteger(month) && month >= 1 && month <= 12) counts[month - 1] += 1;
+    if (!(Number.isInteger(month) && month >= 1 && month <= 12)) continue;
+    if (obs.quality_grade === "research") {
+      research[month - 1] += 1;
+    } else {
+      nonResearch[month - 1] += 1;
+    }
   }
-  return counts;
+  return { research, nonResearch };
 }
 
-function renderSeasonality(counts) {
+function renderSeasonality(countsByQuality) {
   if (!dom.seasonalityChart) return;
 
-  const data = Array.from({ length: 12 }, (_, i) => Number(counts?.[i] || 0));
-  const maxValue = Math.max(0, ...data);
+  const researchData = Array.from({ length: 12 }, (_, i) => Number(countsByQuality?.research?.[i] || 0));
+  const nonResearchData = Array.from({ length: 12 }, (_, i) => Number(countsByQuality?.nonResearch?.[i] || 0));
+  const totalData = researchData.map((v, i) => v + nonResearchData[i]);
+  const maxValue = Math.max(0, ...totalData);
   const step = maxValue <= 10 ? 1 : maxValue >= 50 ? 10 : maxValue >= 20 ? 5 : 2;
   const maxRounded = Math.max(step, Math.ceil(maxValue / step) * step);
 
@@ -855,14 +1213,20 @@ function renderSeasonality(counts) {
   const gw = w - padL - padR;
   const gh = h - padT - padB;
 
-  const points = data.map((v, i) => {
+  const researchPoints = researchData.map((v, i) => {
     const x = padL + (gw * i) / 11;
     const y = padT + gh - (gh * v) / maxRounded;
     return { x, y, v };
   });
 
-  const line = buildSmoothCurvePath(points, padT, padT + gh);
-  const area = `${line} L ${(padL + gw).toFixed(2)} ${(padT + gh).toFixed(2)} L ${padL.toFixed(2)} ${(padT + gh).toFixed(2)} Z`;
+  const nonResearchPoints = nonResearchData.map((v, i) => {
+    const x = padL + (gw * i) / 11;
+    const y = padT + gh - (gh * v) / maxRounded;
+    return { x, y, v };
+  });
+
+  const researchLine = buildSmoothCurvePath(researchPoints, padT, padT + gh);
+  const nonResearchLine = buildSmoothCurvePath(nonResearchPoints, padT, padT + gh);
 
   const gridLines = [];
   for (let v = 0; v <= maxRounded; v += step) {
@@ -875,15 +1239,17 @@ function renderSeasonality(counts) {
   dom.seasonalityChart.innerHTML = `
     <rect x="0" y="0" width="${w}" height="${h}" fill="#08110c" stroke="#1f7a3f" />
     ${gridLines.join("")}
-    <path d="${area}" fill="#173325" fill-opacity="0.45"></path>
-    <path d="${line}" fill="none" stroke="#39b268" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
-    ${points.map((p) => `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="2.6" fill="#39b268"></circle>`).join("")}
+    <path d="${nonResearchLine}" fill="none" stroke="#e0c341" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
+    <path d="${researchLine}" fill="none" stroke="#39b268" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
+    ${nonResearchPoints.map((p) => `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="2.2" fill="#e0c341"></circle>`).join("")}
+    ${researchPoints.map((p) => `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="2.2" fill="#39b268"></circle>`).join("")}
     ${Array.from({ length: 12 }, (_, i) => {
-      const isPeak = maxValue > 0 && data[i] === maxValue;
-      const hasObs = data[i] > 0;
-      const color = isPeak ? "#ff6b6b" : hasObs ? "#f2d15b" : "#8eac98";
+      const hasObs = totalData[i] > 0;
+      const color = hasObs ? "#f2d15b" : "#8eac98";
       return `<text x="${(padL + (gw * i) / 11).toFixed(2)}" y="${h - 8}" fill="${color}" font-size="11" text-anchor="middle">${i + 1}月</text>`;
     }).join("")}
+    <text x="${(padL + 10).toFixed(2)}" y="${(padT + 12).toFixed(2)}" fill="#39b268" font-size="11">研究データ</text>
+    <text x="${(padL + 90).toFixed(2)}" y="${(padT + 12).toFixed(2)}" fill="#e0c341" font-size="11">要同定</text>
   `;
 }
 
@@ -935,6 +1301,140 @@ async function fetchMonthlySeasonality(taxonId) {
   }
 }
 
+async function loadRecentObservationsSlideshow(projectId) {
+  if (!dom.recentObsSlideshow) return;
+
+  dom.recentObsSlideshow.innerHTML = '<p class="recent-empty">最近の観察記録を読み込み中...</p>';
+
+  try {
+    const fetchRecent = async (queryKey, queryValue) => {
+      const url = new URL(`${API_BASE}/observations`);
+      url.searchParams.set(queryKey, String(queryValue));
+      url.searchParams.set("order_by", "created_at");
+      url.searchParams.set("order", "desc");
+      url.searchParams.set("photos", "true");
+      url.searchParams.set("per_page", String(RECENT_OBS_FETCH));
+      url.searchParams.set("locale", "ja");
+
+      const response = await fetchWithTimeout(url, {}, 10000);
+      if (!response.ok) throw new Error(`recent observations fetch failed: ${response.status}`);
+      return response.json();
+    };
+
+    let data = null;
+    if (projectId) {
+      data = await fetchRecent("project_id", projectId);
+    }
+    if (!data || !Array.isArray(data?.results) || data.results.length === 0) {
+      data = await fetchRecent("project_slug", PROJECT_SLUG);
+    }
+
+    const slides = (data?.results || [])
+      .filter((obs) => (obs.photos || []).length > 0)
+      .slice(0, RECENT_OBS_SLIDES)
+      .map((obs) => ({
+        imageUrl: obs.photos?.[0]?.url?.replace("square", "large"),
+        observationUrl: obs.uri || `https://www.inaturalist.org/observations/${obs.id}`,
+        taxonName: obs.taxon?.name || "Unknown",
+        taxonJaName: japaneseNameOrFallback(obs.taxon?.preferred_common_name),
+        observedAt: formatRecentObservedAt(obs),
+        observer: obs.user?.login || "unknown",
+      }))
+      .filter((item) => item.imageUrl);
+
+    renderRecentObservationsSlides(slides);
+  } catch (error) {
+    console.warn("最近の観察記録の取得に失敗", error);
+    dom.recentObsSlideshow.innerHTML = '<p class="recent-empty">最近の観察記録を取得できませんでした。</p>';
+  }
+}
+
+function formatRecentObservedAt(obs) {
+  const dateSource = obs.time_observed_at || obs.observed_on || obs.observed_on_string;
+  if (!dateSource) return "日付不明";
+
+  const date = new Date(dateSource);
+  if (!Number.isNaN(date.getTime())) {
+    return date.toLocaleString("ja-JP", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  return String(dateSource);
+}
+
+function renderRecentObservationsSlides(slides) {
+  if (!dom.recentObsSlideshow) return;
+
+  dom.recentObsSlideshow.innerHTML = "";
+  if (state.recentSlideshowTimer) {
+    clearInterval(state.recentSlideshowTimer);
+    state.recentSlideshowTimer = null;
+  }
+
+  if (slides.length === 0) {
+    dom.recentObsSlideshow.innerHTML = '<p class="recent-empty">表示できる写真付き観察記録がありません。</p>';
+    return;
+  }
+
+  const slideEls = slides.map((slide, index) => {
+    const wrapper = document.createElement("article");
+    wrapper.className = `recent-slide${index === 0 ? " active" : ""}`;
+
+    const link = document.createElement("a");
+    link.href = slide.observationUrl;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+
+    const imageWrap = document.createElement("div");
+    imageWrap.className = "recent-image-wrap";
+
+    const image = document.createElement("img");
+    image.src = slide.imageUrl;
+    image.alt = `${slide.taxonJaName} (${slide.taxonName})`;
+
+    const credit = document.createElement("span");
+    credit.className = "recent-credit";
+    credit.textContent = `© ${slide.observer}`;
+
+    imageWrap.appendChild(image);
+    imageWrap.appendChild(credit);
+
+    const caption = document.createElement("div");
+    caption.className = "recent-caption";
+
+    const dateLine = document.createElement("p");
+    dateLine.className = "recent-date";
+    dateLine.textContent = slide.observedAt;
+
+    const taxonLine = document.createElement("p");
+    taxonLine.className = "recent-taxon";
+    taxonLine.textContent = `${slide.taxonJaName} / ${slide.taxonName}`;
+
+    caption.appendChild(dateLine);
+    caption.appendChild(taxonLine);
+
+    link.appendChild(imageWrap);
+    link.appendChild(caption);
+    wrapper.appendChild(link);
+    dom.recentObsSlideshow.appendChild(wrapper);
+    return wrapper;
+  });
+
+  if (slideEls.length === 1) return;
+
+  let activeIndex = 0;
+  state.recentSlideshowTimer = setInterval(() => {
+    slideEls[activeIndex].classList.remove("active");
+    activeIndex = (activeIndex + 1) % slideEls.length;
+    slideEls[activeIndex].classList.add("active");
+  }, RECENT_SLIDE_INTERVAL_MS);
+}
+
 async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -959,14 +1459,14 @@ async function fetchProjectIdBySlug(slug) {
   return id;
 }
 
-async function fetchAllSpecies(projectId) {
-  const firstPage = await fetchSpeciesPage(projectId, 1);
+async function fetchAllSpecies(projectId, researchOnly = false) {
+  const firstPage = await fetchSpeciesPage(projectId, 1, researchOnly);
   const all = [...firstPage.results];
   const total = firstPage.total_results || all.length;
   const pages = Math.ceil(total / SPECIES_PER_PAGE);
 
   for (let page = 2; page <= pages; page += 1) {
-    const nextPage = await fetchSpeciesPage(projectId, page);
+    const nextPage = await fetchSpeciesPage(projectId, page, researchOnly);
     all.push(...nextPage.results);
   }
 
@@ -977,13 +1477,14 @@ async function fetchAllSpecies(projectId) {
   return normalizeSpeciesArray(normalized);
 }
 
-async function fetchSpeciesPage(projectId, page) {
+async function fetchSpeciesPage(projectId, page, researchOnly = false) {
   const url = new URL(`${API_BASE}/observations/species_counts`);
   url.searchParams.set("project_id", String(projectId));
   url.searchParams.set("verifiable", "true");
   url.searchParams.set("per_page", String(SPECIES_PER_PAGE));
   url.searchParams.set("page", String(page));
   url.searchParams.set("locale", "ja");
+  if (researchOnly) url.searchParams.set("quality_grade", "research");
 
   const response = await fetchWithTimeout(url, {}, 12000);
   if (!response.ok) throw new Error(`Failed to fetch species page ${page}`);
@@ -1018,17 +1519,36 @@ async function fetchObservationsForTaxon(taxonId) {
   return all;
 }
 
-async function familyNameFromTaxon(taxonId) {
-  const url = new URL(`${API_BASE}/taxa/${taxonId}`);
-  url.searchParams.set("locale", "ja");
+async function classificationFromTaxon(taxonId, scientificName = "") {
+  const fallbackGenus = extractGenus(scientificName);
+  const fallbackLabel = fallbackGenus;
 
-  const response = await fetchWithTimeout(url, {}, 10000);
-  if (!response.ok) return "-";
+  try {
+    const url = new URL(`${API_BASE}/taxa/${taxonId}`);
+    url.searchParams.set("locale", "ja");
 
-  const data = await response.json();
-  const ancestors = data?.results?.[0]?.ancestors || [];
-  const family = ancestors.find((node) => node.rank === "family");
-  return family?.name || "-";
+    const response = await fetchWithTimeout(url, {}, 10000);
+    if (!response.ok) return { family: "-", label: fallbackLabel };
+
+    const data = await response.json();
+    const taxon = data?.results?.[0] || {};
+    const ancestors = taxon.ancestors || [];
+
+    const orderNode = ancestors.find((node) => node.rank === "order");
+    const familyNode = ancestors.find((node) => node.rank === "family");
+    const genusNode = ancestors.find((node) => node.rank === "genus");
+
+    const order = orderNode?.name || "-";
+    const family = familyNode?.name || "-";
+    const genus = genusNode?.name || fallbackGenus || "-";
+
+    return {
+      family,
+      label: `${order} > ${family} > ${genus}`,
+    };
+  } catch {
+    return { family: "-", label: fallbackLabel };
+  }
 }
 
 function japaneseNameOrFallback(name) {
