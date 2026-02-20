@@ -88,6 +88,40 @@ body {
   flex: 0 0 auto;
 }
 
+.species-search-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 6px;
+  border: 1px solid var(--line-soft);
+  background: #07100b;
+}
+
+.species-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: #08140e;
+  color: var(--text);
+  border: 1px solid var(--line);
+  padding: 0.28rem 0.38rem;
+  font-size: 0.62rem;
+}
+
+.species-search-input::placeholder {
+  color: #6c8f7d;
+}
+
+.species-search-button {
+  flex: 0 0 auto;
+  background: #0b1a12;
+  color: var(--text);
+  border: 1px solid var(--line);
+  padding: 0.22rem 0.48rem;
+  font-size: 0.58rem;
+  cursor: pointer;
+}
+
 .sidebar-list-section {
   flex: 1 1 auto;
   min-height: 0;
@@ -581,6 +615,22 @@ body {
 
   .sidebar {
     padding: 8px;
+  }
+
+  .species-search-box {
+    gap: 4px;
+    margin-bottom: 6px;
+    padding: 4px;
+  }
+
+  .species-search-input {
+    padding: 0.2rem 0.28rem;
+    font-size: 0.5rem;
+  }
+
+  .species-search-button {
+    padding: 0.14rem 0.26rem;
+    font-size: 0.46rem;
   }
 
   .sidebar-controls {

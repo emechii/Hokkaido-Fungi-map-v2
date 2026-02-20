@@ -108,6 +108,9 @@ const dom = {
   jpModeBtn: document.getElementById("jpSortBtn"),
   scientificModeBtn: document.getElementById("scientificSortBtn"),
   researchOnlyToggle: document.getElementById("researchOnlyToggle"),
+  speciesSearchInput: document.getElementById("speciesSearchInput"),
+  speciesSearchBtn: document.getElementById("speciesSearchBtn"),
+  speciesSearchSuggestions: document.getElementById("speciesSearchSuggestions"),
   homeBtn: document.getElementById("homeBtn"),
   obsLinkBtn: document.getElementById("obsLinkBtn"),
   seasonalityChart: document.getElementById("seasonalityChart"),
@@ -351,6 +354,34 @@ function wireEvents() {
     });
   }
 
+  if (dom.speciesSearchBtn) {
+    dom.speciesSearchBtn.addEventListener("click", () => {
+      performSpeciesSearch(dom.speciesSearchInput?.value || "").catch((error) => {
+        console.error(error);
+        setStatus("検索処理でエラーが発生しました。");
+      });
+    });
+  }
+
+  if (dom.speciesSearchInput) {
+    dom.speciesSearchInput.addEventListener("input", () => {
+      updateSearchSuggestions(dom.speciesSearchInput.value || "");
+    });
+
+    dom.speciesSearchInput.addEventListener("focus", () => {
+      updateSearchSuggestions(dom.speciesSearchInput.value || "");
+    });
+
+    dom.speciesSearchInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      performSpeciesSearch(dom.speciesSearchInput.value || "").catch((error) => {
+        console.error(error);
+        setStatus("検索処理でエラーが発生しました。");
+      });
+    });
+  }
+
   if (dom.homeBtn) {
     dom.homeBtn.addEventListener("click", () => {
       state.selectedTaxonId = null;
@@ -388,6 +419,66 @@ function updateResearchToggleState() {
   if (!dom.researchOnlyToggle) return;
   dom.researchOnlyToggle.classList.toggle("active", state.filterResearchOnly);
   dom.researchOnlyToggle.textContent = state.filterResearchOnly ? "ON" : "OFF";
+}
+
+function normalizeSearchText(text) {
+  return toHiragana((text || "").trim()).toLocaleLowerCase("ja-JP");
+}
+
+function updateSearchSuggestions(rawQuery) {
+  if (!dom.speciesSearchSuggestions) return;
+  const query = normalizeSearchText(rawQuery || "");
+  dom.speciesSearchSuggestions.innerHTML = "";
+
+  if (!query) return;
+
+  const candidates = [];
+  for (const taxon of state.species) {
+    const jp = (taxon.japaneseName || "").trim();
+    const sci = (taxon.name || "").trim();
+    const jpNorm = normalizeSearchText(jp);
+    const sciNorm = normalizeSearchText(sci);
+    if (jpNorm.includes(query) || sciNorm.includes(query)) {
+      if (jp && !candidates.includes(jp)) candidates.push(jp);
+      if (sci && !candidates.includes(sci)) candidates.push(sci);
+    }
+    if (candidates.length >= 10) break;
+  }
+
+  for (const value of candidates.slice(0, 10)) {
+    const option = document.createElement("option");
+    option.value = value;
+    dom.speciesSearchSuggestions.appendChild(option);
+  }
+}
+
+async function performSpeciesSearch(rawQuery) {
+  const query = (rawQuery || "").trim();
+  if (!query) {
+    setStatus("検索語を入力してください。");
+    dom.speciesSearchInput?.focus();
+    return;
+  }
+
+  const q = normalizeSearchText(query);
+  const findMatch = (predicate) => state.species.find((taxon) => {
+    const jp = normalizeSearchText(taxon.japaneseName || "");
+    const sci = normalizeSearchText(taxon.name || "");
+    return predicate(jp, sci);
+  });
+
+  const matched =
+    findMatch((jp, sci) => jp === q || sci === q) ||
+    findMatch((jp, sci) => jp.startsWith(q) || sci.startsWith(q)) ||
+    findMatch((jp, sci) => jp.includes(q) || sci.includes(q));
+
+  if (!matched) {
+    setStatus(`「${query}」に一致する種が見つかりませんでした。`);
+    return;
+  }
+
+  await selectTaxon(matched);
+  setStatus(`検索結果: ${matched.japaneseName} / ${matched.name}`);
 }
 
 function renderSpeciesList() {
