@@ -573,13 +573,9 @@ body {
 }
 
 .map-filter-button {
-  background: #0b1a12;
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 0;
   padding: 0.2rem 0.4rem;
   font-size: 0.62rem;
-  cursor: pointer;
+  line-height: 1;
 }
 
 .map-filter-button.active {
