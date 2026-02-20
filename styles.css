@@ -36,6 +36,14 @@ body {
   font-size: 0.9rem;
 }
 
+.site-note {
+  margin: 0.2rem auto 0;
+  max-width: 920px;
+  color: #7f9988;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
 
 .list-heading {
   margin: 0 0 6px;
@@ -55,7 +63,7 @@ body {
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) 1fr;
+  grid-template-columns: minmax(360px, 460px) 1fr;
   gap: 16px;
   padding: 16px;
   height: calc(100vh - 170px);
@@ -95,23 +103,35 @@ body {
 .list-title-row {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 6px;
 }
 
 .jump-nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 2px;
-  max-width: 145px;
+  display: grid;
+  gap: 0;
+  align-self: start;
+}
+
+.jump-nav[data-mode="jp"] {
+  grid-template-columns: repeat(10, 20px);
+  grid-template-rows: repeat(5, 20px);
+}
+
+.jump-nav[data-mode="scientific"] {
+  grid-template-columns: repeat(7, 20px);
+  grid-template-rows: repeat(4, 20px);
+}
+
+.jump-btn,
+.jump-spacer {
+  width: 20px;
+  height: 20px;
 }
 
 .jump-btn {
-  width: 14px;
-  height: 14px;
   padding: 0;
-  font-size: 9px;
+  font-size: 13px;
   line-height: 1;
   color: #8fd8ac;
   background: transparent;
@@ -119,25 +139,27 @@ body {
   cursor: pointer;
 }
 
-.jump-nav[data-mode="jp"] {
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(10, 14px);
-  grid-auto-columns: 14px;
-  justify-content: end;
+.jump-spacer {
+  border: 1px solid #1f7a3f;
 }
 
-.jump-nav[data-mode="scientific"] {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 2px;
+.jump-nav[data-mode="scientific"] .jump-btn {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-style: normal;
 }
 
 .toggle-row {
   display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+.toggle-buttons {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 4px;
 }
 
 .second-row {
@@ -158,6 +180,29 @@ body {
   background: #12311f;
   color: var(--accent);
   border-color: #2ea156;
+}
+
+
+.list-heading,
+.toggle-button,
+#listTitle,
+.primary-name,
+.list-item small {
+  white-space: nowrap;
+}
+
+.primary-name,
+.list-item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.primary-name {
+  font-size: 0.8rem;
+}
+
+.list-item small {
+  font-size: 0.68rem;
 }
 
 .species-list {
@@ -232,13 +277,20 @@ body {
   color: #c8f2d9;
   font-style: italic;
   font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
-  font-size: 2rem;
-  line-height: 1.2;
+  font-size: 1.6rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ja-name {
   margin-top: 6px;
   color: #93c8a7;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .scientific-text {
@@ -268,9 +320,11 @@ body {
 .featured-photo {
   display: block;
   width: 100%;
-  height: 360px;
-  object-fit: cover;
+  aspect-ratio: 3 / 2;
+  height: auto;
+  object-fit: contain;
   object-position: center;
+  background: #060d09;
 }
 
 .photo-thumbs {
@@ -288,9 +342,11 @@ body {
 .thumb-photo {
   display: block;
   width: 100%;
-  height: 72px;
-  object-fit: cover;
+  aspect-ratio: 3 / 2;
+  height: auto;
+  object-fit: contain;
   object-position: center;
+  background: #060d09;
 }
 
 
@@ -403,7 +459,7 @@ body {
 
 @media (max-width: 1000px) {
   .layout {
-    grid-template-columns: minmax(185px, 42vw) 1fr;
+    grid-template-columns: minmax(150px, 34vw) 1fr;
     height: auto;
     min-height: calc(100vh - 170px);
     gap: 10px;
@@ -428,7 +484,128 @@ body {
   }
 
   .featured-photo {
-    height: 320px;
+    height: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .site-note {
+    font-size: 0.6rem;
+    max-width: 95%;
+  }
+
+  .layout {
+    grid-template-columns: minmax(118px, 30vw) 1fr;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .sidebar {
+    padding: 8px;
+  }
+
+  .toggle-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .jump-nav {
+    order: 1;
+  }
+
+  .toggle-buttons {
+    order: 2;
+  }
+
+  .jump-nav[data-mode="jp"] {
+    grid-template-columns: repeat(10, 10px);
+    grid-template-rows: repeat(5, 10px);
+  }
+
+  .jump-nav[data-mode="scientific"] {
+    grid-template-columns: repeat(7, 10px);
+    grid-template-rows: repeat(4, 10px);
+  }
+
+  .jump-btn,
+  .jump-spacer {
+    width: 10px;
+    height: 10px;
+  }
+
+  .jump-btn {
+    font-size: 8px;
+  }
+
+  .toggle-button {
+    padding: 0.18rem 0.3rem;
+    font-size: 0.58rem;
+  }
+
+  .list-heading {
+    font-size: 0.52rem;
+  }
+
+  #listTitle {
+    font-size: 0.74rem;
+  }
+
+  .primary-name {
+    font-size: 0.58rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .list-item small {
+    font-size: 0.5rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.15;
+    word-break: break-word;
+  }
+
+  .species-list {
+    font-size: 0.68rem;
+  }
+
+  .sci-name {
+    font-size: 0.92rem;
+  }
+
+  .ja-name {
+    font-size: 0.52rem;
+  }
+
+  .seasonality-section h3,
+  .meta-grid,
+  .distribution-summary,
+  .obs-link-button,
+  .recent-observations-subtitle,
+  .recent-caption,
+  .photo-source,
+  .home-button {
+    font-size: 0.52rem;
+  }
+
+  .meta-grid {
+    gap: 6px;
+  }
+
+  .meta-grid div {
+    padding: 6px;
+  }
+
+  .featured-photo,
+  .thumb-photo,
+  .recent-slide img {
+    aspect-ratio: 3 / 2;
+    object-fit: contain;
+    height: auto;
   }
 }
 
@@ -463,4 +640,63 @@ body {
   height: 12px;
   background: #0f2a1c;
   border: 1px solid #1f7a3f;
+}
+
+.recent-observations {
+  padding: 1rem;
+}
+
+.recent-observations h2 {
+  margin: 0;
+  color: #c8f2d9;
+}
+
+.recent-observations-subtitle {
+  margin-top: 0.25rem;
+  margin-bottom: 0.8rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.recent-slideshow {
+  position: relative;
+  border: 1px solid var(--line-soft);
+  background: #07100b;
+  min-height: 300px;
+}
+
+.recent-empty {
+  margin: 0;
+  padding: 1rem;
+  color: var(--muted);
+}
+
+.recent-slide {
+  display: none;
+}
+
+.recent-slide.active {
+  display: block;
+}
+
+.recent-slide a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.recent-slide img {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  height: auto;
+  object-fit: contain;
+  background: #060d09;
+  display: block;
+}
+
+.recent-caption {
+  padding: 0.55rem 0.7rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.88rem;
+  color: #b8dcc6;
 }
