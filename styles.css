@@ -91,12 +91,9 @@ body {
 
 .species-search-box {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
   gap: 6px;
-  width: 100%;
-  min-width: 0;
   margin: 0 0 8px;
   padding: 6px;
   border: 1px solid var(--line-soft);
@@ -104,7 +101,7 @@ body {
 }
 
 .species-search-input {
-  width: 100%;
+  flex: 1 1 auto;
   min-width: 0;
   background: #08140e;
   color: var(--text);
@@ -176,8 +173,8 @@ body {
 
 .sidebar-list-section {
   min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
@@ -326,10 +323,12 @@ body {
 }
 
 .species-list {
-  display: block;
-  min-height: 220px;
-  height: clamp(220px, calc(100vh - 430px), 62vh);
-  max-height: 62vh;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 6px;
@@ -644,8 +643,9 @@ body {
   }
 
   .species-list {
-    min-height: 180px;
-    height: clamp(180px, calc(100vh - 390px), 55vh);
+    flex: 0 0 auto;
+    min-height: 220px;
+    height: auto;
     max-height: 55vh;
   }
 
@@ -705,9 +705,8 @@ body {
   }
 
   .species-search-button {
-    padding: 0.14rem 0.22rem;
+    padding: 0.14rem 0.26rem;
     font-size: 0.46rem;
-    white-space: nowrap;
   }
 
   .species-search-dropdown {
