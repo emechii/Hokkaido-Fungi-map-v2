@@ -100,6 +100,7 @@ const dom = {
   distributionSummary: document.getElementById("distributionSummary"),
   distributionLayer: document.getElementById("distributionLayer"),
   hokkaidoOutline: document.getElementById("hokkaidoOutline"),
+  northernTerritoriesOutline: document.getElementById("northernTerritoriesOutline"),
   jpModeBtn: document.getElementById("jpSortBtn"),
   scientificModeBtn: document.getElementById("scientificSortBtn"),
   homeBtn: document.getElementById("homeBtn"),
@@ -499,7 +500,7 @@ function renderPhotos(taxon, observations) {
       const isResearch = obs.quality_grade === "research";
       const score = (isResearch ? 1000 : 0) + faves * 10;
       return (obs.photos || []).map((photo) => ({
-        imageUrl: photo.url?.replace("square", "medium"),
+        imageUrl: photo.url?.replace("square", "large"),
         obsUrl,
         userName,
         score,
@@ -662,48 +663,43 @@ function renderDistribution(observations) {
 
 async function loadHokkaidoOutlineFromINat() {
   try {
-    const geometry = await fetchHokkaidoGeometryFromINat();
-    if (!geometry) return;
+    const [hokkaidoGeometry, kurilGeometry] = await Promise.all([
+      fetchPlaceGeometryById(13078), // Hokkaido, JP
+      fetchPlaceGeometryById(49474), // Kuril'skiy rayon, RU
+    ]);
 
-    const polygon = chooseLargestPolygon(geometry);
-    if (!polygon || polygon.length < 3) return;
+    const hokkaidoRings = extractOuterRings(hokkaidoGeometry).filter((ring) => ring.length >= 3);
+    const northernRings = filterNorthernTerritoriesRings(extractOuterRings(kurilGeometry));
 
-    const bounds = boundsFromCoordinates(polygon);
+    const allRings = [...hokkaidoRings, ...northernRings];
+    if (allRings.length === 0) return;
+
+    const allCoordinates = allRings.flat();
+    const bounds = boundsFromCoordinates(allCoordinates);
     state.mapBounds = expandBounds(bounds, 0.08);
     const referenceLat = (bounds.minLat + bounds.maxLat) / 2;
     state.mapProjection = computeMapProjection(state.mapBounds, referenceLat);
 
-    const path = buildSvgPathFromLonLat(polygon, state.mapProjection);
-    if (path) {
-      dom.hokkaidoOutline.setAttribute("d", path);
+    const hokkaidoPaths = hokkaidoRings
+      .map((ring) => buildSvgPathFromLonLat(ring, state.mapProjection))
+      .filter(Boolean);
+    if (hokkaidoPaths.length > 0 && dom.hokkaidoOutline) {
+      dom.hokkaidoOutline.setAttribute("d", hokkaidoPaths.join(" "));
+    }
+
+    const northernPaths = northernRings
+      .map((ring) => buildSvgPathFromLonLat(ring, state.mapProjection))
+      .filter(Boolean);
+    if (dom.northernTerritoriesOutline) {
+      dom.northernTerritoriesOutline.setAttribute("d", northernPaths.join(" "));
     }
   } catch (error) {
-    console.warn("北海道境界の取得に失敗したため既定形状を使用します", error);
+    console.warn("北海道/北方領土境界の取得に失敗したため既定形状を使用します", error);
   }
 }
 
-async function fetchHokkaidoGeometryFromINat() {
-  const candidates = [];
-  for (const query of ["北海道", "Hokkaido"]) {
-    const autocompleteUrl = new URL(`${API_BASE}/places/autocomplete`);
-    autocompleteUrl.searchParams.set("q", query);
-    autocompleteUrl.searchParams.set("locale", "ja");
-
-    const autocompleteRes = await fetchWithTimeout(autocompleteUrl, {}, 8000);
-    if (!autocompleteRes.ok) continue;
-
-    const autocompleteData = await autocompleteRes.json();
-    candidates.push(...(autocompleteData.results || []));
-  }
-
-  if (candidates.length === 0) return null;
-
-  const preferred =
-    candidates.find((c) => /北海道/.test(c.display_name || c.name || "")) ||
-    candidates.find((c) => /Hokkaido/i.test(c.display_name || c.name || "")) ||
-    candidates[0];
-
-  const placeUrl = new URL(`${API_BASE}/places/${preferred.id}`);
+async function fetchPlaceGeometryById(placeId) {
+  const placeUrl = new URL(`${API_BASE}/places/${placeId}`);
   placeUrl.searchParams.set("locale", "ja");
 
   const placeRes = await fetchWithTimeout(placeUrl, {}, 8000);
@@ -711,6 +707,45 @@ async function fetchHokkaidoGeometryFromINat() {
 
   const placeData = await placeRes.json();
   return placeData?.results?.[0]?.geometry_geojson || null;
+}
+
+function extractOuterRings(geometry) {
+  if (!geometry) return [];
+
+  if (geometry.type === "Polygon") {
+    return geometry.coordinates?.[0] ? [geometry.coordinates[0]] : [];
+  }
+
+  if (geometry.type === "MultiPolygon") {
+    return (geometry.coordinates || [])
+      .map((polygon) => polygon?.[0])
+      .filter((ring) => Array.isArray(ring) && ring.length >= 3);
+  }
+
+  return [];
+}
+
+function filterNorthernTerritoriesRings(rings) {
+  if (!Array.isArray(rings)) return [];
+
+  // 南千島（国後・択捉・色丹・歯舞）付近に限定して北方領土として表示
+  return rings.filter((ring) => {
+    const center = ringCentroid(ring);
+    if (!center) return false;
+    const [lon, lat] = center;
+    return lon >= 145 && lon <= 149.2 && lat >= 43 && lat <= 46;
+  });
+}
+
+function ringCentroid(ring) {
+  if (!Array.isArray(ring) || ring.length === 0) return null;
+  let lon = 0;
+  let lat = 0;
+  for (const point of ring) {
+    lon += Number(point?.[0] || 0);
+    lat += Number(point?.[1] || 0);
+  }
+  return [lon / ring.length, lat / ring.length];
 }
 
 function chooseLargestPolygon(geometry) {

@@ -36,6 +36,14 @@ body {
   font-size: 0.9rem;
 }
 
+.site-note {
+  margin: 0.2rem auto 0;
+  max-width: 920px;
+  color: #7f9988;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
 
 .list-heading {
   margin: 0 0 6px;
@@ -106,24 +114,24 @@ body {
 }
 
 .jump-nav[data-mode="jp"] {
-  grid-template-columns: repeat(10, 30px);
-  grid-template-rows: repeat(5, 30px);
+  grid-template-columns: repeat(10, 20px);
+  grid-template-rows: repeat(5, 20px);
 }
 
 .jump-nav[data-mode="scientific"] {
-  grid-template-columns: repeat(7, 30px);
-  grid-template-rows: repeat(4, 30px);
+  grid-template-columns: repeat(7, 20px);
+  grid-template-rows: repeat(4, 20px);
 }
 
 .jump-btn,
 .jump-spacer {
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
 }
 
 .jump-btn {
   padding: 0;
-  font-size: 22px;
+  font-size: 13px;
   line-height: 1;
   color: #8fd8ac;
   background: transparent;
@@ -150,7 +158,15 @@ body {
 
 .toggle-buttons {
   display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
   gap: 8px;
+}
+
+.toggle-buttons {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 4px;
 }
 
 .second-row {
@@ -171,6 +187,29 @@ body {
   background: #12311f;
   color: var(--accent);
   border-color: #2ea156;
+}
+
+
+.list-heading,
+.toggle-button,
+#listTitle,
+.primary-name,
+.list-item small {
+  white-space: nowrap;
+}
+
+.primary-name,
+.list-item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.primary-name {
+  font-size: 0.8rem;
+}
+
+.list-item small {
+  font-size: 0.68rem;
 }
 
 .species-list {
@@ -245,13 +284,20 @@ body {
   color: #c8f2d9;
   font-style: italic;
   font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
-  font-size: 2rem;
-  line-height: 1.2;
+  font-size: 1.6rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ja-name {
   margin-top: 6px;
   color: #93c8a7;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .scientific-text {
@@ -281,9 +327,11 @@ body {
 .featured-photo {
   display: block;
   width: 100%;
-  height: 360px;
-  object-fit: cover;
+  aspect-ratio: 3 / 2;
+  height: auto;
+  object-fit: contain;
   object-position: center;
+  background: #060d09;
 }
 
 .photo-thumbs {
@@ -301,9 +349,11 @@ body {
 .thumb-photo {
   display: block;
   width: 100%;
-  height: 72px;
-  object-fit: cover;
+  aspect-ratio: 3 / 2;
+  height: auto;
+  object-fit: contain;
   object-position: center;
+  background: #060d09;
 }
 
 
@@ -416,7 +466,7 @@ body {
 
 @media (max-width: 1000px) {
   .layout {
-    grid-template-columns: minmax(185px, 42vw) 1fr;
+    grid-template-columns: minmax(150px, 34vw) 1fr;
     height: auto;
     min-height: calc(100vh - 170px);
     gap: 10px;
@@ -441,7 +491,128 @@ body {
   }
 
   .featured-photo {
-    height: 320px;
+    height: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .site-note {
+    font-size: 0.6rem;
+    max-width: 95%;
+  }
+
+  .layout {
+    grid-template-columns: minmax(118px, 30vw) 1fr;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .sidebar {
+    padding: 8px;
+  }
+
+  .toggle-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .jump-nav {
+    order: 1;
+  }
+
+  .toggle-buttons {
+    order: 2;
+  }
+
+  .jump-nav[data-mode="jp"] {
+    grid-template-columns: repeat(10, 10px);
+    grid-template-rows: repeat(5, 10px);
+  }
+
+  .jump-nav[data-mode="scientific"] {
+    grid-template-columns: repeat(7, 10px);
+    grid-template-rows: repeat(4, 10px);
+  }
+
+  .jump-btn,
+  .jump-spacer {
+    width: 10px;
+    height: 10px;
+  }
+
+  .jump-btn {
+    font-size: 8px;
+  }
+
+  .toggle-button {
+    padding: 0.18rem 0.3rem;
+    font-size: 0.58rem;
+  }
+
+  .list-heading {
+    font-size: 0.52rem;
+  }
+
+  #listTitle {
+    font-size: 0.74rem;
+  }
+
+  .primary-name {
+    font-size: 0.58rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .list-item small {
+    font-size: 0.5rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.15;
+    word-break: break-word;
+  }
+
+  .species-list {
+    font-size: 0.68rem;
+  }
+
+  .sci-name {
+    font-size: 0.92rem;
+  }
+
+  .ja-name {
+    font-size: 0.52rem;
+  }
+
+  .seasonality-section h3,
+  .meta-grid,
+  .distribution-summary,
+  .obs-link-button,
+  .recent-observations-subtitle,
+  .recent-caption,
+  .photo-source,
+  .home-button {
+    font-size: 0.52rem;
+  }
+
+  .meta-grid {
+    gap: 6px;
+  }
+
+  .meta-grid div {
+    padding: 6px;
+  }
+
+  .featured-photo,
+  .thumb-photo,
+  .recent-slide img {
+    aspect-ratio: 3 / 2;
+    object-fit: contain;
+    height: auto;
   }
 }
 
@@ -523,8 +694,10 @@ body {
 
 .recent-slide img {
   width: 100%;
-  height: 320px;
-  object-fit: cover;
+  aspect-ratio: 3 / 2;
+  height: auto;
+  object-fit: contain;
+  background: #060d09;
   display: block;
 }
 
