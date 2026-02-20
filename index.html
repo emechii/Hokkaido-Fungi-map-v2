@@ -10,6 +10,7 @@
     <header class="site-header">
       <h1>北海道菌類リスト</h1>
       <p class="subtitle">Powered by 北菌同好会 (iNaturalist-北菌bot)</p>
+      <p class="site-note">本サイトはiNaturalistで同定された内容をそのまま反映しているため、同定の正確性に欠けることをご理解の上ご利用下さい</p>
     </header>
 
     <main class="layout">
@@ -17,15 +18,24 @@
         <section class="sidebar-top">
           <h2 class="list-heading">種名リスト <small id="speciesCount" class="species-count">-種</small></h2>
           <div class="toggle-row">
-            <button id="jpSortBtn" class="toggle-button active">和名</button>
-            <button id="scientificSortBtn" class="toggle-button">学名</button>
+            <div class="toggle-controls">
+              <div class="toggle-buttons">
+                <button id="jpSortBtn" class="toggle-button active">和名</button>
+                <button id="scientificSortBtn" class="toggle-button">学名</button>
+              </div>
+              <div class="quality-filter">
+                <p class="quality-label">研究データのみ</p>
+                <button id="researchOnlyToggle" class="quality-toggle-button" type="button">OFF</button>
+              </div>
+            </div>
+            <div id="jumpNav" class="jump-nav" aria-label="種名ジャンプ"></div>
           </div>
         </section>
 
         <section class="sidebar-list-section">
           <div class="list-title-row">
             <h2 id="listTitle">和名(五十音)</h2>
-            <div id="jumpNav" class="jump-nav" aria-label="種名ジャンプ"></div>
+            
           </div>
           <div id="speciesList" class="species-list" aria-live="polite"></div>
         </section>
@@ -33,7 +43,14 @@
       </aside>
 
       <section class="content">
+        <article id="recentObsCard" class="panel recent-observations" aria-live="polite">
+          <h2>最近の観察記録</h2>
+          <p class="recent-observations-subtitle">北海道からの菌類観察記録</p>
+          <div id="recentObsSlideshow" class="recent-slideshow"></div>
+        </article>
+
         <article id="detailCard" class="panel detail hidden" aria-live="polite">
+          <p id="detailLineage" class="detail-lineage">-</p>
           <h2 id="detailSciName" class="sci-name">-</h2>
           <p id="detailJaName" class="ja-name">-</p>
 
@@ -73,6 +90,13 @@
                 <path
                   id="hokkaidoOutline"
                   d="M140 300 L118 286 L102 265 L94 242 L93 221 L103 201 L119 188 L136 182 L150 170 L159 152 L170 135 L188 120 L208 108 L229 95 L252 84 L276 73 L301 63 L329 57 L357 59 L381 70 L401 88 L410 108 L408 130 L399 148 L386 160 L394 172 L414 176 L439 176 L466 181 L490 193 L509 210 L524 229 L540 247 L561 252 L580 260 L588 274 L583 288 L569 299 L551 307 L530 311 L510 318 L496 329 L484 344 L471 356 L452 365 L428 371 L402 374 L376 377 L349 381 L322 384 L298 377 L280 364 L263 351 L244 344 L223 339 L200 337 L177 337 L158 342 L144 352 L130 360 L117 353 L112 337 L119 321 Z"
+                  fill="#173325"
+                  stroke="#39b268"
+                  stroke-width="2"
+                />
+                <path
+                  id="northernTerritoriesOutline"
+                  d=""
                   fill="#173325"
                   stroke="#39b268"
                   stroke-width="2"
