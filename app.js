@@ -372,16 +372,9 @@ function renderJumpNav(inJpMode) {
   dom.jumpNav.innerHTML = "";
   dom.jumpNav.dataset.mode = inJpMode ? "jp" : "scientific";
 
-  const grid = inJpMode ? GOJUON_JUMP_GRID : SCIENTIFIC_JUMP_GRID;
-  for (const row of grid) {
-    for (const key of row) {
-      if (!key) {
-        const spacer = document.createElement("span");
-        spacer.className = "jump-spacer";
-        spacer.setAttribute("aria-hidden", "true");
-        dom.jumpNav.appendChild(spacer);
-        continue;
-      }
+  const keys = inJpMode
+    ? GOJUON_JUMP_ORDER
+    : Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 
       const btn = document.createElement("button");
       btn.type = "button";
