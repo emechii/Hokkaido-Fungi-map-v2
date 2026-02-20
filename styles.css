@@ -91,9 +91,12 @@ body {
 
 .species-search-box {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
+  width: 100%;
+  min-width: 0;
   margin: 0 0 8px;
   padding: 6px;
   border: 1px solid var(--line-soft);
@@ -101,7 +104,7 @@ body {
 }
 
 .species-search-input {
-  flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
   background: #08140e;
   color: var(--text);
@@ -173,8 +176,8 @@ body {
 
 .sidebar-list-section {
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
 }
 
@@ -323,12 +326,10 @@ body {
 }
 
 .species-list {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  flex: 1 1 0;
-  min-height: 0;
-  max-height: 100%;
+  display: block;
+  min-height: 220px;
+  height: clamp(220px, calc(100vh - 430px), 62vh);
+  max-height: 62vh;
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 6px;
@@ -643,9 +644,8 @@ body {
   }
 
   .species-list {
-    flex: 0 0 auto;
-    min-height: 220px;
-    height: auto;
+    min-height: 180px;
+    height: clamp(180px, calc(100vh - 390px), 55vh);
     max-height: 55vh;
   }
 
@@ -694,7 +694,8 @@ body {
   }
 
   .species-search-box {
-    gap: 4px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
     margin-bottom: 6px;
     padding: 4px;
   }
@@ -705,8 +706,12 @@ body {
   }
 
   .species-search-button {
-    padding: 0.14rem 0.26rem;
-    font-size: 0.46rem;
+    justify-self: end;
+    width: auto;
+    max-width: 100%;
+    padding: 0.12rem 0.2rem;
+    font-size: 0.44rem;
+    white-space: nowrap;
   }
 
   .species-search-dropdown {
