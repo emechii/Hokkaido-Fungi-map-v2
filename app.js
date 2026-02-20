@@ -1249,7 +1249,7 @@ function renderSeasonality(countsByQuality) {
       return `<text x="${(padL + (gw * i) / 11).toFixed(2)}" y="${h - 8}" fill="${color}" font-size="11" text-anchor="middle">${i + 1}月</text>`;
     }).join("")}
     <text x="${(padL + 10).toFixed(2)}" y="${(padT + 12).toFixed(2)}" fill="#39b268" font-size="11">研究データ</text>
-    <text x="${(padL + 90).toFixed(2)}" y="${(padT + 12).toFixed(2)}" fill="#e0c341" font-size="11">要同定など</text>
+    <text x="${(padL + 90).toFixed(2)}" y="${(padT + 12).toFixed(2)}" fill="#e0c341" font-size="11">要同定</text>
   `;
 }
 

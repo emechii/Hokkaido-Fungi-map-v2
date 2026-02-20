@@ -223,12 +223,12 @@ body {
   line-height: 1;
   color: #8fd8ac;
   background: transparent;
-  border: 1px solid #1f7a3f;
+  border: 0.8px solid #1f7a3f;
   cursor: pointer;
 }
 
 .jump-spacer {
-  border: 1px solid #1f7a3f;
+  border: 0.8px solid #1f7a3f;
 }
 
 .jump-nav[data-mode="scientific"] .jump-btn {
