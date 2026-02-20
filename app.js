@@ -273,40 +273,49 @@ async function saveSpeciesToIndexedDB(species) {
 }
 
 function wireEvents() {
-  dom.speciesList.addEventListener("scroll", () => {
-    state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
-  });
+  if (dom.speciesList) {
+    dom.speciesList.addEventListener("scroll", () => {
+      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+    });
+  }
 
-  dom.jpModeBtn.addEventListener("click", () => {
-    state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
-    state.currentMode = "jp";
-    updateToggleState();
-    renderSpeciesList();
-  });
+  if (dom.jpModeBtn && dom.speciesList) {
+    dom.jpModeBtn.addEventListener("click", () => {
+      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+      state.currentMode = "jp";
+      updateToggleState();
+      renderSpeciesList();
+    });
+  }
 
-  dom.scientificModeBtn.addEventListener("click", () => {
-    state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
-    state.currentMode = "scientific";
-    updateToggleState();
-    renderSpeciesList();
-  });
+  if (dom.scientificModeBtn && dom.speciesList) {
+    dom.scientificModeBtn.addEventListener("click", () => {
+      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+      state.currentMode = "scientific";
+      updateToggleState();
+      renderSpeciesList();
+    });
+  }
 
-  dom.homeBtn.addEventListener("click", () => {
-    state.selectedTaxonId = null;
-    dom.detailCard.classList.add("hidden");
-    dom.distributionLayer.innerHTML = "";
-    renderSpeciesList();
-    setStatus(`${state.species.length}種を取得しました。左側の一覧から選択してください。`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
+  if (dom.homeBtn) {
+    dom.homeBtn.addEventListener("click", () => {
+      state.selectedTaxonId = null;
+      dom.detailCard?.classList.add("hidden");
+      if (dom.distributionLayer) dom.distributionLayer.innerHTML = "";
+      renderSpeciesList();
+      setStatus(`${state.species.length}種を取得しました。左側の一覧から選択してください。`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
 }
 
 function updateToggleState() {
-  dom.jpModeBtn.classList.toggle("active", state.currentMode === "jp");
-  dom.scientificModeBtn.classList.toggle("active", state.currentMode === "scientific");
+  dom.jpModeBtn?.classList.toggle("active", state.currentMode === "jp");
+  dom.scientificModeBtn?.classList.toggle("active", state.currentMode === "scientific");
 }
 
 function renderSpeciesList() {
+  if (!dom.speciesList || !dom.listTitle) return;
   dom.speciesList.innerHTML = "";
 
   const inJpMode = state.currentMode === "jp";
