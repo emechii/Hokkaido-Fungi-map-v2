@@ -150,6 +150,9 @@ body {
   text-align: left;
   padding: 0.34rem 0.42rem;
   font-size: 0.58rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: pointer;
 }
 

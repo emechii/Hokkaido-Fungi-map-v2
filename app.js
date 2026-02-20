@@ -457,37 +457,45 @@ function updateSearchSuggestions(rawQuery) {
     return;
   }
 
-  const candidates = [];
+  const matches = [];
   for (const taxon of state.species) {
-    const jp = (taxon.japaneseName || "").trim();
-    const sci = (taxon.name || "").trim();
-    const jpNorm = normalizeSearchText(jp);
-    const sciNorm = normalizeSearchText(sci);
-    if (jpNorm.includes(query) || sciNorm.includes(query)) {
-      if (jp && !candidates.includes(jp)) candidates.push(jp);
-      if (sci && !candidates.includes(sci)) candidates.push(sci);
-    }
-    if (candidates.length >= 10) break;
+    const jpName = (taxon.japaneseName || "").trim();
+    const sciName = (taxon.name || "").trim();
+    const jpNorm = normalizeSearchText(jpName);
+    const sciNorm = normalizeSearchText(sciName);
+
+    const jpMatched = jpNorm.includes(query);
+    const sciMatched = sciNorm.includes(query);
+    if (!jpMatched && !sciMatched) continue;
+
+    const label = jpMatched
+      ? (sciName && jpName !== "和名なし" ? `${jpName} / ${sciName}` : jpName)
+      : sciName;
+
+    matches.push({ taxon, label });
+    if (matches.length >= 10) break;
   }
 
-  if (candidates.length === 0) {
+  if (matches.length === 0) {
     hideSearchSuggestions();
     return;
   }
 
-  for (const value of candidates.slice(0, 10)) {
+  for (const match of matches) {
     const item = document.createElement("button");
     item.type = "button";
     item.className = "species-suggestion-item";
-    item.textContent = value;
+    item.textContent = match.label;
     item.setAttribute("role", "option");
     item.addEventListener("mousedown", (event) => {
       event.preventDefault();
     });
     item.addEventListener("click", () => {
-      if (dom.speciesSearchInput) dom.speciesSearchInput.value = value;
+      if (dom.speciesSearchInput) dom.speciesSearchInput.value = match.label;
       hideSearchSuggestions();
-      performSpeciesSearch(value).catch((error) => {
+      selectTaxon(match.taxon).then(() => {
+        setStatus(`検索結果: ${match.taxon.japaneseName} / ${match.taxon.name}`);
+      }).catch((error) => {
         console.error(error);
         setStatus("検索処理でエラーが発生しました。");
       });
