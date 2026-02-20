@@ -55,7 +55,7 @@ body {
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) 1fr;
+  grid-template-columns: minmax(360px, 460px) 1fr;
   gap: 16px;
   padding: 16px;
   height: calc(100vh - 170px);
@@ -106,24 +106,24 @@ body {
 }
 
 .jump-nav[data-mode="jp"] {
-  grid-template-columns: repeat(10, 24px);
-  grid-template-rows: repeat(5, 24px);
+  grid-template-columns: repeat(10, 30px);
+  grid-template-rows: repeat(5, 30px);
 }
 
 .jump-nav[data-mode="scientific"] {
-  grid-template-columns: repeat(7, 24px);
-  grid-template-rows: repeat(4, 24px);
+  grid-template-columns: repeat(7, 30px);
+  grid-template-rows: repeat(4, 30px);
 }
 
 .jump-btn,
 .jump-spacer {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
 }
 
 .jump-btn {
   padding: 0;
-  font-size: 14px;
+  font-size: 22px;
   line-height: 1;
   color: #8fd8ac;
   background: transparent;
@@ -135,11 +135,16 @@ body {
   border: 1px solid #1f7a3f;
 }
 
-.toggle-row {
+.jump-nav[data-mode="scientific"] .jump-btn {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-style: normal;
+}
+
+.toggle-buttons {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 8px;
 }
 

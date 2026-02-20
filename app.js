@@ -114,7 +114,8 @@ initialize().catch((error) => {
 
 async function initialize() {
   wireEvents();
-  loadRecentObservationsSlideshow();
+  dom.detailCard?.classList.add("hidden");
+  dom.recentObsCard?.classList.remove("hidden");
 
   // プレビュー（file://）でも最低限一覧が見えるよう、埋め込み種データを先に描画。
   state.species = normalizeSpeciesArray(EMBEDDED_LOCAL_SPECIES);
@@ -147,6 +148,8 @@ async function initialize() {
     setStatus("iNaturalist プロジェクト情報を取得しています...");
     state.projectId = await fetchProjectIdBySlug(PROJECT_SLUG);
 
+    await loadRecentObservationsSlideshow(state.projectId);
+
     setStatus("北海道の菌類種一覧を取得しています...");
     const remoteSpecies = await fetchAllSpecies(state.projectId);
     if (remoteSpecies.length > 0) {
@@ -156,6 +159,7 @@ async function initialize() {
     }
   } catch (error) {
     console.warn("オンライン取得に失敗したためローカル一覧を使用します", error);
+    await loadRecentObservationsSlideshow(null);
   }
 
   if (state.species.length === 0) {
@@ -372,9 +376,16 @@ function renderJumpNav(inJpMode) {
   dom.jumpNav.innerHTML = "";
   dom.jumpNav.dataset.mode = inJpMode ? "jp" : "scientific";
 
-  const keys = inJpMode
-    ? GOJUON_JUMP_ORDER
-    : Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
+  const grid = inJpMode ? GOJUON_JUMP_GRID : SCIENTIFIC_JUMP_GRID;
+  for (const row of grid) {
+    for (const key of row) {
+      if (!key) {
+        const spacer = document.createElement("span");
+        spacer.className = "jump-spacer";
+        spacer.setAttribute("aria-hidden", "true");
+        dom.jumpNav.appendChild(spacer);
+        continue;
+      }
 
       const btn = document.createElement("button");
       btn.type = "button";
@@ -952,24 +963,34 @@ async function fetchMonthlySeasonality(taxonId) {
   }
 }
 
-async function loadRecentObservationsSlideshow() {
+async function loadRecentObservationsSlideshow(projectId) {
   if (!dom.recentObsSlideshow) return;
 
   dom.recentObsSlideshow.innerHTML = '<p class="recent-empty">最近の観察記録を読み込み中...</p>';
 
   try {
-    const url = new URL(`${API_BASE}/observations`);
-    url.searchParams.set("project_id", PROJECT_SLUG);
-    url.searchParams.set("order_by", "created_at");
-    url.searchParams.set("order", "desc");
-    url.searchParams.set("photos", "true");
-    url.searchParams.set("per_page", String(RECENT_OBS_FETCH));
-    url.searchParams.set("locale", "ja");
+    const fetchRecent = async (queryKey, queryValue) => {
+      const url = new URL(`${API_BASE}/observations`);
+      url.searchParams.set(queryKey, String(queryValue));
+      url.searchParams.set("order_by", "created_at");
+      url.searchParams.set("order", "desc");
+      url.searchParams.set("photos", "true");
+      url.searchParams.set("per_page", String(RECENT_OBS_FETCH));
+      url.searchParams.set("locale", "ja");
 
-    const response = await fetchWithTimeout(url, {}, 10000);
-    if (!response.ok) throw new Error(`recent observations fetch failed: ${response.status}`);
+      const response = await fetchWithTimeout(url, {}, 10000);
+      if (!response.ok) throw new Error(`recent observations fetch failed: ${response.status}`);
+      return response.json();
+    };
 
-    const data = await response.json();
+    let data = null;
+    if (projectId) {
+      data = await fetchRecent("project_id", projectId);
+    }
+    if (!data || !Array.isArray(data?.results) || data.results.length === 0) {
+      data = await fetchRecent("project_slug", PROJECT_SLUG);
+    }
+
     const slides = (data?.results || [])
       .filter((obs) => (obs.photos || []).length > 0)
       .slice(0, RECENT_OBS_SLIDES)
