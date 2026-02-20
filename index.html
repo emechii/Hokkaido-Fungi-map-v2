@@ -18,9 +18,15 @@
         <section class="sidebar-top">
           <h2 class="list-heading">種名リスト <small id="speciesCount" class="species-count">-種</small></h2>
           <div class="toggle-row">
-            <div class="toggle-buttons">
-              <button id="jpSortBtn" class="toggle-button active">和名</button>
-              <button id="scientificSortBtn" class="toggle-button">学名</button>
+            <div class="toggle-controls">
+              <div class="toggle-buttons">
+                <button id="jpSortBtn" class="toggle-button active">和名</button>
+                <button id="scientificSortBtn" class="toggle-button">学名</button>
+              </div>
+              <div class="quality-filter">
+                <p class="quality-label">研究データのみ</p>
+                <button id="researchOnlyToggle" class="quality-toggle-button" type="button">OFF</button>
+              </div>
             </div>
             <div id="jumpNav" class="jump-nav" aria-label="種名ジャンプ"></div>
           </div>
@@ -39,11 +45,12 @@
       <section class="content">
         <article id="recentObsCard" class="panel recent-observations" aria-live="polite">
           <h2>最近の観察記録</h2>
-          <p class="recent-observations-subtitle">北海道きのこプロジェクトの最新投稿</p>
+          <p class="recent-observations-subtitle">北海道からの菌類観察記録</p>
           <div id="recentObsSlideshow" class="recent-slideshow"></div>
         </article>
 
         <article id="detailCard" class="panel detail hidden" aria-live="polite">
+          <p id="detailLineage" class="detail-lineage">-</p>
           <h2 id="detailSciName" class="sci-name">-</h2>
           <p id="detailJaName" class="ja-name">-</p>
 

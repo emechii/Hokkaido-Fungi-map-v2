@@ -73,6 +73,9 @@ const EMBEDDED_LOCAL_SPECIES = [
 const state = {
   projectId: null,
   species: [],
+  allSpecies: [],
+  researchSpecies: [],
+  filterResearchOnly: false,
   currentMode: "jp", // jp: 和名表示(五十音順) / scientific: 学名表示(アルファベット順)
   selectedTaxonId: null,
   mapBounds: { ...DEFAULT_BOUNDS },
@@ -90,6 +93,7 @@ const dom = {
   recentObsCard: document.getElementById("recentObsCard"),
   recentObsSlideshow: document.getElementById("recentObsSlideshow"),
   detailCard: document.getElementById("detailCard"),
+  detailLineage: document.getElementById("detailLineage"),
   detailJaName: document.getElementById("detailJaName"),
   detailSciName: document.getElementById("detailSciName"),
   photoGrid: document.getElementById("photoGrid"),
@@ -103,6 +107,7 @@ const dom = {
   northernTerritoriesOutline: document.getElementById("northernTerritoriesOutline"),
   jpModeBtn: document.getElementById("jpSortBtn"),
   scientificModeBtn: document.getElementById("scientificSortBtn"),
+  researchOnlyToggle: document.getElementById("researchOnlyToggle"),
   homeBtn: document.getElementById("homeBtn"),
   obsLinkBtn: document.getElementById("obsLinkBtn"),
   seasonalityChart: document.getElementById("seasonalityChart"),
@@ -119,7 +124,7 @@ async function initialize() {
   dom.recentObsCard?.classList.remove("hidden");
 
   // プレビュー（file://）でも最低限一覧が見えるよう、埋め込み種データを先に描画。
-  state.species = normalizeSpeciesArray(EMBEDDED_LOCAL_SPECIES);
+  setSpeciesData(normalizeSpeciesArray(EMBEDDED_LOCAL_SPECIES));
   if (state.species.length > 0) {
     renderSpeciesList();
     setStatus(`埋め込みデータから ${state.species.length} 種を表示中...`);
@@ -128,7 +133,7 @@ async function initialize() {
   let loadedFromDb = false;
   const dbSpecies = await loadSpeciesFromIndexedDB();
   if (dbSpecies.length > 0) {
-    state.species = dbSpecies;
+    setSpeciesData(dbSpecies);
     loadedFromDb = true;
     renderSpeciesList();
     setStatus(`ローカルDBから ${dbSpecies.length} 種を表示中。最新データを確認します...`);
@@ -136,7 +141,7 @@ async function initialize() {
 
   const localSpecies = await loadLocalSpecies();
   if (!loadedFromDb && localSpecies.length > 0) {
-    state.species = localSpecies;
+    setSpeciesData(localSpecies);
     renderSpeciesList();
     setStatus(`ローカルデータから ${localSpecies.length} 種を表示中。最新データを確認します...`);
   }
@@ -154,7 +159,7 @@ async function initialize() {
     setStatus("北海道の菌類種一覧を取得しています...");
     const remoteSpecies = await fetchAllSpecies(state.projectId);
     if (remoteSpecies.length > 0) {
-      state.species = remoteSpecies;
+      setSpeciesData(remoteSpecies);
       saveSpeciesCache(remoteSpecies);
       await saveSpeciesToIndexedDB(remoteSpecies);
     }
@@ -311,6 +316,41 @@ function wireEvents() {
     });
   }
 
+
+  if (dom.researchOnlyToggle) {
+    dom.researchOnlyToggle.addEventListener("click", async () => {
+      const next = !state.filterResearchOnly;
+
+      if (next && !state.projectId) {
+        setStatus("オフライン表示中のため研究グレード絞り込みは利用できません。");
+        state.filterResearchOnly = false;
+        updateResearchToggleState();
+        return;
+      }
+
+      if (next && state.researchSpecies.length === 0 && state.projectId) {
+        setStatus("研究グレード種一覧を取得しています...");
+        try {
+          const researchSpecies = await fetchAllSpecies(state.projectId, true);
+          state.researchSpecies = researchSpecies;
+        } catch (error) {
+          console.warn("研究グレード種一覧の取得に失敗", error);
+          setStatus("研究グレード一覧の取得に失敗しました。通常一覧を表示します。");
+          state.filterResearchOnly = false;
+          updateResearchToggleState();
+          return;
+        }
+      }
+
+      state.filterResearchOnly = next;
+      applySpeciesFilter();
+      updateResearchToggleState();
+      renderSpeciesList();
+      const modeLabel = state.filterResearchOnly ? "研究グレード" : "全件";
+      setStatus(`${modeLabel}一覧を表示中（${state.species.length}種）。`);
+    });
+  }
+
   if (dom.homeBtn) {
     dom.homeBtn.addEventListener("click", () => {
       state.selectedTaxonId = null;
@@ -327,6 +367,27 @@ function wireEvents() {
 function updateToggleState() {
   dom.jpModeBtn?.classList.toggle("active", state.currentMode === "jp");
   dom.scientificModeBtn?.classList.toggle("active", state.currentMode === "scientific");
+  updateResearchToggleState();
+}
+
+function setSpeciesData(species, asResearch = false) {
+  const normalized = normalizeSpeciesArray(species);
+  if (asResearch) {
+    state.researchSpecies = normalized;
+  } else {
+    state.allSpecies = normalized;
+  }
+  applySpeciesFilter();
+}
+
+function applySpeciesFilter() {
+  state.species = state.filterResearchOnly ? [...state.researchSpecies] : [...state.allSpecies];
+}
+
+function updateResearchToggleState() {
+  if (!dom.researchOnlyToggle) return;
+  dom.researchOnlyToggle.classList.toggle("active", state.filterResearchOnly);
+  dom.researchOnlyToggle.textContent = state.filterResearchOnly ? "ON" : "OFF";
 }
 
 function renderSpeciesList() {
@@ -463,10 +524,13 @@ async function selectTaxon(taxon) {
   dom.recentObsCard?.classList.add("hidden");
   dom.detailSciName.textContent = taxon.name;
   dom.detailJaName.textContent = taxon.japaneseName === "和名なし" ? "" : taxon.japaneseName;
+  if (dom.detailLineage) dom.detailLineage.textContent = "分類情報を取得中...";
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (dom.content) dom.content.scrollTo({ top: 0, behavior: "smooth" });
   dom.metaGenus.textContent = extractGenus(taxon.name);
-  dom.metaFamily.textContent = await familyNameFromTaxon(taxon.id);
+  const classification = await classificationFromTaxon(taxon.id, taxon.name);
+  dom.metaFamily.textContent = classification.family;
+  if (dom.detailLineage) dom.detailLineage.textContent = classification.label;
   dom.metaObsCount.textContent = String(taxon.count || "-");
   dom.metaUpdated.textContent = new Date().toLocaleDateString("ja-JP");
   dom.photoGrid.innerHTML = "<p>観察記録を読み込み中...</p>";
@@ -587,15 +651,17 @@ function createPhotoCard(item, isFeatured, isActive = false, clickable = false, 
   img.className = isFeatured ? "featured-photo" : "thumb-photo";
 
   if (clickable && typeof onThumbClick === "function") {
-    img.classList.add("thumb-clickable");
-    img.addEventListener("click", onThumbClick);
+    card.classList.add("thumb-clickable");
+    card.addEventListener("click", onThumbClick);
   }
 
-  const source = document.createElement("a");
+  const source = isFeatured ? document.createElement("a") : document.createElement("span");
   source.className = "photo-source";
-  source.href = item.obsUrl;
-  source.target = "_blank";
-  source.rel = "noopener noreferrer";
+  if (isFeatured) {
+    source.href = item.obsUrl;
+    source.target = "_blank";
+    source.rel = "noopener noreferrer";
+  }
   const licenseText = item.licenseCode ? ` (${item.licenseCode})` : "";
   source.textContent = `© ${item.userName}${licenseText}`;
 
@@ -1034,7 +1100,7 @@ async function loadRecentObservationsSlideshow(projectId) {
         observationUrl: obs.uri || `https://www.inaturalist.org/observations/${obs.id}`,
         taxonName: obs.taxon?.name || "Unknown",
         taxonJaName: japaneseNameOrFallback(obs.taxon?.preferred_common_name),
-        observedAt: obs.observed_on_string || obs.observed_on || "日付不明",
+        observedAt: formatRecentObservedAt(obs),
         observer: obs.user?.login || "unknown",
       }))
       .filter((item) => item.imageUrl);
@@ -1044,6 +1110,24 @@ async function loadRecentObservationsSlideshow(projectId) {
     console.warn("最近の観察記録の取得に失敗", error);
     dom.recentObsSlideshow.innerHTML = '<p class="recent-empty">最近の観察記録を取得できませんでした。</p>';
   }
+}
+
+function formatRecentObservedAt(obs) {
+  const dateSource = obs.time_observed_at || obs.observed_on || obs.observed_on_string;
+  if (!dateSource) return "日付不明";
+
+  const date = new Date(dateSource);
+  if (!Number.isNaN(date.getTime())) {
+    return date.toLocaleString("ja-JP", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  return String(dateSource);
 }
 
 function renderRecentObservationsSlides(slides) {
@@ -1069,15 +1153,35 @@ function renderRecentObservationsSlides(slides) {
     link.target = "_blank";
     link.rel = "noopener noreferrer";
 
+    const imageWrap = document.createElement("div");
+    imageWrap.className = "recent-image-wrap";
+
     const image = document.createElement("img");
     image.src = slide.imageUrl;
     image.alt = `${slide.taxonJaName} (${slide.taxonName})`;
 
-    const caption = document.createElement("p");
-    caption.className = "recent-caption";
-    caption.textContent = `${slide.taxonJaName} / ${slide.taxonName} ・ 観察者: ${slide.observer} ・ ${slide.observedAt}`;
+    const credit = document.createElement("span");
+    credit.className = "recent-credit";
+    credit.textContent = `© ${slide.observer}`;
 
-    link.appendChild(image);
+    imageWrap.appendChild(image);
+    imageWrap.appendChild(credit);
+
+    const caption = document.createElement("div");
+    caption.className = "recent-caption";
+
+    const dateLine = document.createElement("p");
+    dateLine.className = "recent-date";
+    dateLine.textContent = slide.observedAt;
+
+    const taxonLine = document.createElement("p");
+    taxonLine.className = "recent-taxon";
+    taxonLine.textContent = `${slide.taxonJaName} / ${slide.taxonName}`;
+
+    caption.appendChild(dateLine);
+    caption.appendChild(taxonLine);
+
+    link.appendChild(imageWrap);
     link.appendChild(caption);
     wrapper.appendChild(link);
     dom.recentObsSlideshow.appendChild(wrapper);
@@ -1118,14 +1222,14 @@ async function fetchProjectIdBySlug(slug) {
   return id;
 }
 
-async function fetchAllSpecies(projectId) {
-  const firstPage = await fetchSpeciesPage(projectId, 1);
+async function fetchAllSpecies(projectId, researchOnly = false) {
+  const firstPage = await fetchSpeciesPage(projectId, 1, researchOnly);
   const all = [...firstPage.results];
   const total = firstPage.total_results || all.length;
   const pages = Math.ceil(total / SPECIES_PER_PAGE);
 
   for (let page = 2; page <= pages; page += 1) {
-    const nextPage = await fetchSpeciesPage(projectId, page);
+    const nextPage = await fetchSpeciesPage(projectId, page, researchOnly);
     all.push(...nextPage.results);
   }
 
@@ -1136,13 +1240,14 @@ async function fetchAllSpecies(projectId) {
   return normalizeSpeciesArray(normalized);
 }
 
-async function fetchSpeciesPage(projectId, page) {
+async function fetchSpeciesPage(projectId, page, researchOnly = false) {
   const url = new URL(`${API_BASE}/observations/species_counts`);
   url.searchParams.set("project_id", String(projectId));
   url.searchParams.set("verifiable", "true");
   url.searchParams.set("per_page", String(SPECIES_PER_PAGE));
   url.searchParams.set("page", String(page));
   url.searchParams.set("locale", "ja");
+  if (researchOnly) url.searchParams.set("quality_grade", "research");
 
   const response = await fetchWithTimeout(url, {}, 12000);
   if (!response.ok) throw new Error(`Failed to fetch species page ${page}`);
@@ -1177,17 +1282,36 @@ async function fetchObservationsForTaxon(taxonId) {
   return all;
 }
 
-async function familyNameFromTaxon(taxonId) {
-  const url = new URL(`${API_BASE}/taxa/${taxonId}`);
-  url.searchParams.set("locale", "ja");
+async function classificationFromTaxon(taxonId, scientificName = "") {
+  const fallbackGenus = extractGenus(scientificName);
+  const fallbackLabel = fallbackGenus;
 
-  const response = await fetchWithTimeout(url, {}, 10000);
-  if (!response.ok) return "-";
+  try {
+    const url = new URL(`${API_BASE}/taxa/${taxonId}`);
+    url.searchParams.set("locale", "ja");
 
-  const data = await response.json();
-  const ancestors = data?.results?.[0]?.ancestors || [];
-  const family = ancestors.find((node) => node.rank === "family");
-  return family?.name || "-";
+    const response = await fetchWithTimeout(url, {}, 10000);
+    if (!response.ok) return { family: "-", label: fallbackLabel };
+
+    const data = await response.json();
+    const taxon = data?.results?.[0] || {};
+    const ancestors = taxon.ancestors || [];
+
+    const orderNode = ancestors.find((node) => node.rank === "order");
+    const familyNode = ancestors.find((node) => node.rank === "family");
+    const genusNode = ancestors.find((node) => node.rank === "genus");
+
+    const order = orderNode?.name || "-";
+    const family = familyNode?.name || "-";
+    const genus = genusNode?.name || fallbackGenus || "-";
+
+    return {
+      family,
+      label: `${order} > ${family} > ${genus}`,
+    };
+  } catch {
+    return { family: "-", label: fallbackLabel };
+  }
 }
 
 function japaneseNameOrFallback(name) {
