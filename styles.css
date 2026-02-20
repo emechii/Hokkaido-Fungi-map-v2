@@ -855,31 +855,36 @@ body {
 
 
 .species-list,
-.content {
+.content,
+.species-search-dropdown {
   scrollbar-width: thin;
   scrollbar-color: #39b268 #0b1a12;
 }
 
 .species-list::-webkit-scrollbar,
-.content::-webkit-scrollbar {
+.content::-webkit-scrollbar,
+.species-search-dropdown::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
 
 .species-list::-webkit-scrollbar-track,
-.content::-webkit-scrollbar-track {
+.content::-webkit-scrollbar-track,
+.species-search-dropdown::-webkit-scrollbar-track {
   background: #0b1a12;
   border: 1px solid #1f7a3f;
 }
 
 .species-list::-webkit-scrollbar-thumb,
-.content::-webkit-scrollbar-thumb {
+.content::-webkit-scrollbar-thumb,
+.species-search-dropdown::-webkit-scrollbar-thumb {
   background: #1f7a3f;
   border: 2px solid #0b1a12;
 }
 
 .species-list::-webkit-scrollbar-button,
-.content::-webkit-scrollbar-button {
+.content::-webkit-scrollbar-button,
+.species-search-dropdown::-webkit-scrollbar-button {
   display: block;
   height: 12px;
   background: #0f2a1c;
