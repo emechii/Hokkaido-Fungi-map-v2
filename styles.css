@@ -148,12 +148,19 @@ body {
   font-style: normal;
 }
 
-.toggle-row {
+.toggle-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.toggle-buttons {
   display: flex;
   justify-content: flex-start;
   align-items: flex-start;
   gap: 8px;
-  margin-bottom: 8px;
 }
 
 .toggle-buttons {
