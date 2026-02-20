@@ -140,7 +140,7 @@ body {
   font-style: normal;
 }
 
-.toggle-row {
+.toggle-buttons {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
