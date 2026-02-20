@@ -568,6 +568,29 @@ body {
 }
 
 
+
+.map-filter-buttons {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0 6px;
+}
+
+.map-filter-button {
+  background: #0b1a12;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.62rem;
+  cursor: pointer;
+}
+
+.map-filter-button.active {
+  background: #12311f;
+  color: var(--accent);
+  border-color: #2ea156;
+}
+
 .distribution-summary {
   margin: 4px 0 10px;
   color: var(--muted);
@@ -779,6 +802,16 @@ body {
   .obs-link-button,
   .home-button {
     font-size: 0.52rem;
+  }
+
+  .map-filter-buttons {
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .map-filter-button {
+    font-size: 0.44rem;
+    padding: 0.12rem 0.22rem;
   }
 
   .photo-source {

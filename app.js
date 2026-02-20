@@ -82,6 +82,8 @@ const state = {
   mapProjection: computeMapProjection(DEFAULT_BOUNDS),
   listScrollByMode: { jp: 0, scientific: 0 },
   recentSlideshowTimer: null,
+  currentObservations: [],
+  mapResearchOnly: false,
 };
 
 const dom = {
@@ -103,6 +105,8 @@ const dom = {
   metaUpdated: document.getElementById("metaUpdated"),
   distributionSummary: document.getElementById("distributionSummary"),
   distributionLayer: document.getElementById("distributionLayer"),
+  mapShowAllBtn: document.getElementById("mapShowAllBtn"),
+  mapShowResearchBtn: document.getElementById("mapShowResearchBtn"),
   hokkaidoOutline: document.getElementById("hokkaidoOutline"),
   northernTerritoriesOutline: document.getElementById("northernTerritoriesOutline"),
   jpModeBtn: document.getElementById("jpSortBtn"),
@@ -398,6 +402,22 @@ function wireEvents() {
     hideSearchSuggestions();
   });
 
+  if (dom.mapShowAllBtn) {
+    dom.mapShowAllBtn.addEventListener("click", () => {
+      state.mapResearchOnly = false;
+      updateMapFilterButtons();
+      renderDistribution(state.currentObservations);
+    });
+  }
+
+  if (dom.mapShowResearchBtn) {
+    dom.mapShowResearchBtn.addEventListener("click", () => {
+      state.mapResearchOnly = true;
+      updateMapFilterButtons();
+      renderDistribution(state.currentObservations);
+    });
+  }
+
   if (dom.homeBtn) {
     dom.homeBtn.addEventListener("click", () => {
       state.selectedTaxonId = null;
@@ -415,6 +435,7 @@ function updateToggleState() {
   dom.jpModeBtn?.classList.toggle("active", state.currentMode === "jp");
   dom.scientificModeBtn?.classList.toggle("active", state.currentMode === "scientific");
   updateResearchToggleState();
+  updateMapFilterButtons();
 }
 
 function setSpeciesData(species, asResearch = false) {
@@ -435,6 +456,11 @@ function updateResearchToggleState() {
   if (!dom.researchOnlyToggle) return;
   dom.researchOnlyToggle.classList.toggle("active", state.filterResearchOnly);
   dom.researchOnlyToggle.textContent = state.filterResearchOnly ? "ON" : "OFF";
+}
+
+function updateMapFilterButtons() {
+  dom.mapShowAllBtn?.classList.toggle("active", !state.mapResearchOnly);
+  dom.mapShowResearchBtn?.classList.toggle("active", state.mapResearchOnly);
 }
 
 function normalizeSearchText(text) {
@@ -662,6 +688,8 @@ function createListButton(taxon) {
 
 async function selectTaxon(taxon) {
   state.selectedTaxonId = taxon.id;
+  state.mapResearchOnly = false;
+  updateMapFilterButtons();
   renderSpeciesList();
 
   dom.detailCard.classList.remove("hidden");
@@ -680,13 +708,14 @@ async function selectTaxon(taxon) {
   dom.photoGrid.innerHTML = "<p>観察記録を読み込み中...</p>";
   dom.distributionSummary.textContent = "分布ポイントを読み込み中...";
   dom.distributionLayer.innerHTML = "";
-  renderSeasonality(Array(12).fill(0));
+  state.currentObservations = [];
+  renderSeasonality({ research: Array(12).fill(0), nonResearch: Array(12).fill(0) });
 
   const observations = state.projectId ? await fetchObservationsForTaxon(taxon.id) : [];
+  state.currentObservations = observations;
   renderPhotos(taxon, observations);
   renderDistribution(observations);
-  const monthlyCounts = state.projectId ? await fetchMonthlySeasonality(taxon.id) : countsFromObservations(observations);
-  renderSeasonality(monthlyCounts);
+  renderSeasonality(countsByQualityFromObservations(observations));
 
   if (!state.projectId) {
     dom.distributionSummary.textContent = "ローカル表示中のため分布ポイント取得はスキップしました。";
@@ -823,23 +852,44 @@ function createPhotoCard(item, isFeatured, isActive = false, clickable = false, 
 }
 
 function renderDistribution(observations) {
+  if (!dom.distributionLayer || !dom.distributionSummary) return;
   dom.distributionLayer.innerHTML = "";
 
-  const projectedPoints = observations
-    .map((obs) => obs.geojson?.coordinates)
-    .filter((coords) => Array.isArray(coords) && coords.length === 2)
-    .map(([lon, lat]) => projectLonLatToMap(lon, lat, state.mapProjection))
-    .filter(Boolean);
+  const filtered = (observations || []).filter((obs) => {
+    if (!state.mapResearchOnly) return true;
+    return obs?.quality_grade === "research";
+  });
 
-  if (projectedPoints.length === 0) {
+  const withCoords = filtered
+    .map((obs) => ({ obs, coords: obs?.geojson?.coordinates }))
+    .filter((entry) => Array.isArray(entry.coords) && entry.coords.length === 2)
+    .map((entry) => ({
+      obs: entry.obs,
+      point: projectLonLatToMap(entry.coords[0], entry.coords[1], state.mapProjection),
+    }))
+    .filter((entry) => entry.point);
+
+  if (withCoords.length === 0) {
     dom.distributionSummary.textContent = "座標付き観察が見つかりませんでした。";
     return;
   }
 
+  const precisePoints = [];
+  const fuzzyPoints = [];
+  for (const entry of withCoords) {
+    const geoprivacy = (entry.obs?.geoprivacy || "").toLowerCase();
+    const isFuzzy = entry.obs?.obscured === true || geoprivacy === "obscured" || geoprivacy === "private";
+    if (isFuzzy) {
+      fuzzyPoints.push(entry.point);
+    } else {
+      precisePoints.push(entry.point);
+    }
+  }
+
+  // 不明瞭座標は従来どおり薄い赤丸
   const grid = new Map();
   const cellSize = 5;
-
-  for (const p of projectedPoints) {
+  for (const p of fuzzyPoints) {
     const gx = Math.round(p.x / cellSize);
     const gy = Math.round(p.y / cellSize);
     const key = `${gx},${gy}`;
@@ -851,13 +901,11 @@ function renderDistribution(observations) {
     }
   }
 
-  const cells = [...grid.values()];
-  const maxCount = Math.max(...cells.map((c) => c.count));
-
-  for (const cell of cells) {
-    const intensity = cell.count / maxCount;
+  const fuzzyCells = [...grid.values()];
+  const maxFuzzy = Math.max(1, ...fuzzyCells.map((c) => c.count));
+  for (const cell of fuzzyCells) {
+    const intensity = cell.count / maxFuzzy;
     const radius = 7 + Math.sqrt(cell.count) * 2.2;
-
     const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     halo.setAttribute("cx", String(cell.x));
     halo.setAttribute("cy", String(cell.y));
@@ -865,10 +913,21 @@ function renderDistribution(observations) {
     halo.setAttribute("fill", "#ff4d4d");
     halo.setAttribute("fill-opacity", String(0.1 + intensity * 0.22));
     dom.distributionLayer.appendChild(halo);
-
   }
 
-  dom.distributionSummary.textContent = `座標付き観察 ${projectedPoints.length}件（表示点 ${cells.length}）`;
+  // 公開座標は濃い赤い点
+  for (const p of precisePoints) {
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    dot.setAttribute("cx", p.x.toFixed(2));
+    dot.setAttribute("cy", p.y.toFixed(2));
+    dot.setAttribute("r", "2.4");
+    dot.setAttribute("fill", "#8b0000");
+    dot.setAttribute("fill-opacity", "0.95");
+    dom.distributionLayer.appendChild(dot);
+  }
+
+  const modeLabel = state.mapResearchOnly ? "研究データのみ" : "全記録";
+  dom.distributionSummary.textContent = `${modeLabel}: 公開座標 ${precisePoints.length}件 / 不明瞭座標 ${fuzzyPoints.length}件`;
 }
 
 async function loadHokkaidoOutlineFromINat() {
@@ -1102,20 +1161,28 @@ function updateSpeciesCount() {
   dom.speciesCount.textContent = `${state.species.length}種`;
 }
 
-function countsFromObservations(observations) {
-  const counts = Array(12).fill(0);
+function countsByQualityFromObservations(observations) {
+  const research = Array(12).fill(0);
+  const nonResearch = Array(12).fill(0);
   for (const obs of observations) {
     const month = obs?.observed_on_details?.month;
-    if (Number.isInteger(month) && month >= 1 && month <= 12) counts[month - 1] += 1;
+    if (!(Number.isInteger(month) && month >= 1 && month <= 12)) continue;
+    if (obs.quality_grade === "research") {
+      research[month - 1] += 1;
+    } else {
+      nonResearch[month - 1] += 1;
+    }
   }
-  return counts;
+  return { research, nonResearch };
 }
 
-function renderSeasonality(counts) {
+function renderSeasonality(countsByQuality) {
   if (!dom.seasonalityChart) return;
 
-  const data = Array.from({ length: 12 }, (_, i) => Number(counts?.[i] || 0));
-  const maxValue = Math.max(0, ...data);
+  const researchData = Array.from({ length: 12 }, (_, i) => Number(countsByQuality?.research?.[i] || 0));
+  const nonResearchData = Array.from({ length: 12 }, (_, i) => Number(countsByQuality?.nonResearch?.[i] || 0));
+  const totalData = researchData.map((v, i) => v + nonResearchData[i]);
+  const maxValue = Math.max(0, ...totalData);
   const step = maxValue <= 10 ? 1 : maxValue >= 50 ? 10 : maxValue >= 20 ? 5 : 2;
   const maxRounded = Math.max(step, Math.ceil(maxValue / step) * step);
 
@@ -1128,14 +1195,20 @@ function renderSeasonality(counts) {
   const gw = w - padL - padR;
   const gh = h - padT - padB;
 
-  const points = data.map((v, i) => {
+  const researchPoints = researchData.map((v, i) => {
     const x = padL + (gw * i) / 11;
     const y = padT + gh - (gh * v) / maxRounded;
     return { x, y, v };
   });
 
-  const line = buildSmoothCurvePath(points, padT, padT + gh);
-  const area = `${line} L ${(padL + gw).toFixed(2)} ${(padT + gh).toFixed(2)} L ${padL.toFixed(2)} ${(padT + gh).toFixed(2)} Z`;
+  const nonResearchPoints = nonResearchData.map((v, i) => {
+    const x = padL + (gw * i) / 11;
+    const y = padT + gh - (gh * v) / maxRounded;
+    return { x, y, v };
+  });
+
+  const researchLine = buildSmoothCurvePath(researchPoints, padT, padT + gh);
+  const nonResearchLine = buildSmoothCurvePath(nonResearchPoints, padT, padT + gh);
 
   const gridLines = [];
   for (let v = 0; v <= maxRounded; v += step) {
@@ -1148,15 +1221,17 @@ function renderSeasonality(counts) {
   dom.seasonalityChart.innerHTML = `
     <rect x="0" y="0" width="${w}" height="${h}" fill="#08110c" stroke="#1f7a3f" />
     ${gridLines.join("")}
-    <path d="${area}" fill="#173325" fill-opacity="0.45"></path>
-    <path d="${line}" fill="none" stroke="#39b268" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
-    ${points.map((p) => `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="2.6" fill="#39b268"></circle>`).join("")}
+    <path d="${nonResearchLine}" fill="none" stroke="#e0c341" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
+    <path d="${researchLine}" fill="none" stroke="#39b268" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>
+    ${nonResearchPoints.map((p) => `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="2.2" fill="#e0c341"></circle>`).join("")}
+    ${researchPoints.map((p) => `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="2.2" fill="#39b268"></circle>`).join("")}
     ${Array.from({ length: 12 }, (_, i) => {
-      const isPeak = maxValue > 0 && data[i] === maxValue;
-      const hasObs = data[i] > 0;
-      const color = isPeak ? "#ff6b6b" : hasObs ? "#f2d15b" : "#8eac98";
+      const hasObs = totalData[i] > 0;
+      const color = hasObs ? "#f2d15b" : "#8eac98";
       return `<text x="${(padL + (gw * i) / 11).toFixed(2)}" y="${h - 8}" fill="${color}" font-size="11" text-anchor="middle">${i + 1}月</text>`;
     }).join("")}
+    <text x="${(padL + 10).toFixed(2)}" y="${(padT + 12).toFixed(2)}" fill="#39b268" font-size="11">研究データ</text>
+    <text x="${(padL + 90).toFixed(2)}" y="${(padT + 12).toFixed(2)}" fill="#e0c341" font-size="11">要同定など</text>
   `;
 }
 
