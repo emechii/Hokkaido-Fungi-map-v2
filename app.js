@@ -584,7 +584,9 @@ function renderSpeciesList() {
 
   const sorted = [...state.species].sort((a, b) => {
     if (inJpMode) {
-      return a.japaneseName.localeCompare(b.japaneseName, "ja");
+      const aJp = (a.japaneseName || a.name || "").trim();
+      const bJp = (b.japaneseName || b.name || "").trim();
+      return aJp.localeCompare(bJp, "ja");
     }
 
     const aSci = (a.name || "").toLocaleLowerCase("en");
@@ -672,8 +674,10 @@ function createListButton(taxon) {
   button.type = "button";
 
   const inJpMode = state.currentMode === "jp";
-  const primary = inJpMode ? taxon.japaneseName : taxon.name;
-  const secondary = inJpMode ? taxon.name : taxon.japaneseName;
+  const primaryRaw = inJpMode ? taxon.japaneseName : taxon.name;
+  const secondaryRaw = inJpMode ? taxon.name : taxon.japaneseName;
+  const primary = (primaryRaw || "-").trim() || "-";
+  const secondary = (secondaryRaw || "-").trim() || "-";
 
   const primaryEl = document.createElement("span");
   primaryEl.className = `primary-name${inJpMode ? "" : " scientific-text"}`;
