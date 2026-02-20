@@ -10,6 +10,9 @@ const FEATURED_PHOTO_COUNT = 1;
 const THUMBNAIL_GRID_TOTAL = 14;
 const OBS_PER_PAGE = 200;
 const MAX_OBS_PAGES = 3;
+const RECENT_OBS_SLIDES = 5;
+const RECENT_OBS_FETCH = 30;
+const RECENT_SLIDE_INTERVAL_MS = 4000;
 
 const DEFAULT_BOUNDS = { minLon: 139.2, maxLon: 146.4, minLat: 41.2, maxLat: 45.9 };
 const MAP_CANVAS = { x: 20, y: 20, width: 560, height: 320 };
@@ -27,17 +30,12 @@ const GOJUON_ORDER = [
   "わ", "を", "ん",
 ];
 
-const GOJUON_JUMP_ORDER = [
-  "あ", "い", "う", "え", "お",
-  "か", "き", "く", "け", "こ",
-  "さ", "し", "す", "せ", "そ",
-  "た", "ち", "つ", "て", "と",
-  "な", "に", "ぬ", "ね", "の",
-  "は", "ひ", "ふ", "へ", "ほ",
-  "ま", "み", "む", "め", "も",
-  "や", "ゆ", "よ",
-  "ら", "り", "る", "れ", "ろ",
-  "わ",
+const GOJUON_JUMP_GRID = [
+  ["わ", "ら", "や", "ま", "は", "な", "た", "さ", "か", "あ"],
+  ["", "り", "", "み", "ひ", "に", "ち", "し", "き", "い"],
+  ["を", "る", "ゆ", "む", "ふ", "ぬ", "つ", "す", "く", "う"],
+  ["", "れ", "", "め", "へ", "ね", "て", "せ", "け", "え"],
+  ["ん", "ろ", "よ", "も", "ほ", "の", "と", "そ", "こ", "お"],
 ];
 
 const GOJUON_NORMALIZE_MAP = {
@@ -49,6 +47,13 @@ const GOJUON_NORMALIZE_MAP = {
   "ぱ": "は", "ぴ": "ひ", "ぷ": "ふ", "ぺ": "へ", "ぽ": "ほ",
   "ゃ": "や", "ゅ": "ゆ", "ょ": "よ", "ゎ": "わ", "ゔ": "う",
 };
+
+const SCIENTIFIC_JUMP_GRID = [
+  ["A", "B", "C", "D", "E", "F", "G"],
+  ["H", "I", "J", "K", "L", "M", "N"],
+  ["O", "P", "Q", "R", "S", "T", "U"],
+  ["V", "W", "X", "Y", "Z", "", ""],
+];
 
 const EMBEDDED_LOCAL_SPECIES = [
   { id: 47170, name: "Amanita muscaria", preferred_common_name: "ベニテングタケ", count: 12 },
@@ -73,6 +78,7 @@ const state = {
   mapBounds: { ...DEFAULT_BOUNDS },
   mapProjection: computeMapProjection(DEFAULT_BOUNDS),
   listScrollByMode: { jp: 0, scientific: 0 },
+  recentSlideshowTimer: null,
 };
 
 const dom = {
@@ -81,6 +87,8 @@ const dom = {
   speciesCount: document.getElementById("speciesCount"),
   jumpNav: document.getElementById("jumpNav"),
   content: document.querySelector(".content"),
+  recentObsCard: document.getElementById("recentObsCard"),
+  recentObsSlideshow: document.getElementById("recentObsSlideshow"),
   detailCard: document.getElementById("detailCard"),
   detailJaName: document.getElementById("detailJaName"),
   detailSciName: document.getElementById("detailSciName"),
@@ -106,6 +114,7 @@ initialize().catch((error) => {
 
 async function initialize() {
   wireEvents();
+  loadRecentObservationsSlideshow();
 
   // プレビュー（file://）でも最低限一覧が見えるよう、埋め込み種データを先に描画。
   state.species = normalizeSpeciesArray(EMBEDDED_LOCAL_SPECIES);
@@ -273,40 +282,50 @@ async function saveSpeciesToIndexedDB(species) {
 }
 
 function wireEvents() {
-  dom.speciesList.addEventListener("scroll", () => {
-    state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
-  });
+  if (dom.speciesList) {
+    dom.speciesList.addEventListener("scroll", () => {
+      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+    });
+  }
 
-  dom.jpModeBtn.addEventListener("click", () => {
-    state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
-    state.currentMode = "jp";
-    updateToggleState();
-    renderSpeciesList();
-  });
+  if (dom.jpModeBtn && dom.speciesList) {
+    dom.jpModeBtn.addEventListener("click", () => {
+      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+      state.currentMode = "jp";
+      updateToggleState();
+      renderSpeciesList();
+    });
+  }
 
-  dom.scientificModeBtn.addEventListener("click", () => {
-    state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
-    state.currentMode = "scientific";
-    updateToggleState();
-    renderSpeciesList();
-  });
+  if (dom.scientificModeBtn && dom.speciesList) {
+    dom.scientificModeBtn.addEventListener("click", () => {
+      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+      state.currentMode = "scientific";
+      updateToggleState();
+      renderSpeciesList();
+    });
+  }
 
-  dom.homeBtn.addEventListener("click", () => {
-    state.selectedTaxonId = null;
-    dom.detailCard.classList.add("hidden");
-    dom.distributionLayer.innerHTML = "";
-    renderSpeciesList();
-    setStatus(`${state.species.length}種を取得しました。左側の一覧から選択してください。`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
+  if (dom.homeBtn) {
+    dom.homeBtn.addEventListener("click", () => {
+      state.selectedTaxonId = null;
+      dom.detailCard?.classList.add("hidden");
+      dom.recentObsCard?.classList.remove("hidden");
+      if (dom.distributionLayer) dom.distributionLayer.innerHTML = "";
+      renderSpeciesList();
+      setStatus(`${state.species.length}種を取得しました。左側の一覧から選択してください。`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
 }
 
 function updateToggleState() {
-  dom.jpModeBtn.classList.toggle("active", state.currentMode === "jp");
-  dom.scientificModeBtn.classList.toggle("active", state.currentMode === "scientific");
+  dom.jpModeBtn?.classList.toggle("active", state.currentMode === "jp");
+  dom.scientificModeBtn?.classList.toggle("active", state.currentMode === "scientific");
 }
 
 function renderSpeciesList() {
+  if (!dom.speciesList || !dom.listTitle) return;
   dom.speciesList.innerHTML = "";
 
   const inJpMode = state.currentMode === "jp";
@@ -353,20 +372,24 @@ function renderJumpNav(inJpMode) {
   dom.jumpNav.innerHTML = "";
   dom.jumpNav.dataset.mode = inJpMode ? "jp" : "scientific";
 
-  const keys = inJpMode
-    ? GOJUON_JUMP_ORDER
+  const grid = inJpMode ? GOJUON_JUMP_GRID : SCIENTIFIC_JUMP_GRID;
+  for (const row of grid) {
+    for (const key of row) {
+      if (!key) {
+        const spacer = document.createElement("span");
+        spacer.className = "jump-spacer";
+        spacer.setAttribute("aria-hidden", "true");
+        dom.jumpNav.appendChild(spacer);
+        continue;
+      }
 
-  const keys = inJpMode
-    ? GOJUON_ORDER
-    : Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
-
-  for (const key of keys) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "jump-btn";
-    btn.textContent = key;
-    btn.addEventListener("click", () => scrollToGroup(key));
-    dom.jumpNav.appendChild(btn);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "jump-btn";
+      btn.textContent = key;
+      btn.addEventListener("click", () => scrollToGroup(key));
+      dom.jumpNav.appendChild(btn);
+    }
   }
 }
 
@@ -432,6 +455,7 @@ async function selectTaxon(taxon) {
   renderSpeciesList();
 
   dom.detailCard.classList.remove("hidden");
+  dom.recentObsCard?.classList.add("hidden");
   dom.detailSciName.textContent = taxon.name;
   dom.detailJaName.textContent = taxon.japaneseName === "和名なし" ? "" : taxon.japaneseName;
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -933,6 +957,92 @@ async function fetchMonthlySeasonality(taxonId) {
     console.warn("季節性データの取得に失敗", error);
     return Array(12).fill(0);
   }
+}
+
+async function loadRecentObservationsSlideshow() {
+  if (!dom.recentObsSlideshow) return;
+
+  dom.recentObsSlideshow.innerHTML = '<p class="recent-empty">最近の観察記録を読み込み中...</p>';
+
+  try {
+    const url = new URL(`${API_BASE}/observations`);
+    url.searchParams.set("project_id", PROJECT_SLUG);
+    url.searchParams.set("order_by", "created_at");
+    url.searchParams.set("order", "desc");
+    url.searchParams.set("photos", "true");
+    url.searchParams.set("per_page", String(RECENT_OBS_FETCH));
+    url.searchParams.set("locale", "ja");
+
+    const response = await fetchWithTimeout(url, {}, 10000);
+    if (!response.ok) throw new Error(`recent observations fetch failed: ${response.status}`);
+
+    const data = await response.json();
+    const slides = (data?.results || [])
+      .filter((obs) => (obs.photos || []).length > 0)
+      .slice(0, RECENT_OBS_SLIDES)
+      .map((obs) => ({
+        imageUrl: obs.photos?.[0]?.url?.replace("square", "large"),
+        observationUrl: obs.uri || `https://www.inaturalist.org/observations/${obs.id}`,
+        taxonName: obs.taxon?.name || "Unknown",
+        taxonJaName: japaneseNameOrFallback(obs.taxon?.preferred_common_name),
+        observedAt: obs.observed_on_string || obs.observed_on || "日付不明",
+        observer: obs.user?.login || "unknown",
+      }))
+      .filter((item) => item.imageUrl);
+
+    renderRecentObservationsSlides(slides);
+  } catch (error) {
+    console.warn("最近の観察記録の取得に失敗", error);
+    dom.recentObsSlideshow.innerHTML = '<p class="recent-empty">最近の観察記録を取得できませんでした。</p>';
+  }
+}
+
+function renderRecentObservationsSlides(slides) {
+  if (!dom.recentObsSlideshow) return;
+
+  dom.recentObsSlideshow.innerHTML = "";
+  if (state.recentSlideshowTimer) {
+    clearInterval(state.recentSlideshowTimer);
+    state.recentSlideshowTimer = null;
+  }
+
+  if (slides.length === 0) {
+    dom.recentObsSlideshow.innerHTML = '<p class="recent-empty">表示できる写真付き観察記録がありません。</p>';
+    return;
+  }
+
+  const slideEls = slides.map((slide, index) => {
+    const wrapper = document.createElement("article");
+    wrapper.className = `recent-slide${index === 0 ? " active" : ""}`;
+
+    const link = document.createElement("a");
+    link.href = slide.observationUrl;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+
+    const image = document.createElement("img");
+    image.src = slide.imageUrl;
+    image.alt = `${slide.taxonJaName} (${slide.taxonName})`;
+
+    const caption = document.createElement("p");
+    caption.className = "recent-caption";
+    caption.textContent = `${slide.taxonJaName} / ${slide.taxonName} ・ 観察者: ${slide.observer} ・ ${slide.observedAt}`;
+
+    link.appendChild(image);
+    link.appendChild(caption);
+    wrapper.appendChild(link);
+    dom.recentObsSlideshow.appendChild(wrapper);
+    return wrapper;
+  });
+
+  if (slideEls.length === 1) return;
+
+  let activeIndex = 0;
+  state.recentSlideshowTimer = setInterval(() => {
+    slideEls[activeIndex].classList.remove("active");
+    activeIndex = (activeIndex + 1) % slideEls.length;
+    slideEls[activeIndex].classList.add("active");
+  }, RECENT_SLIDE_INTERVAL_MS);
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {

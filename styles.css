@@ -95,23 +95,35 @@ body {
 .list-title-row {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 6px;
 }
 
 .jump-nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 2px;
-  max-width: 145px;
+  display: grid;
+  gap: 0;
+  align-self: start;
+}
+
+.jump-nav[data-mode="jp"] {
+  grid-template-columns: repeat(10, 24px);
+  grid-template-rows: repeat(5, 24px);
+}
+
+.jump-nav[data-mode="scientific"] {
+  grid-template-columns: repeat(7, 24px);
+  grid-template-rows: repeat(4, 24px);
+}
+
+.jump-btn,
+.jump-spacer {
+  width: 24px;
+  height: 24px;
 }
 
 .jump-btn {
-  width: 14px;
-  height: 14px;
   padding: 0;
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1;
   color: #8fd8ac;
   background: transparent;
@@ -119,25 +131,21 @@ body {
   cursor: pointer;
 }
 
-.jump-nav[data-mode="jp"] {
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(10, 14px);
-  grid-auto-columns: 14px;
-  justify-content: end;
-}
-
-.jump-nav[data-mode="scientific"] {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 2px;
+.jump-spacer {
+  border: 1px solid #1f7a3f;
 }
 
 .toggle-row {
   display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   gap: 8px;
   margin-bottom: 8px;
+}
+
+.toggle-buttons {
+  display: flex;
+  gap: 8px;
 }
 
 .second-row {
@@ -463,4 +471,61 @@ body {
   height: 12px;
   background: #0f2a1c;
   border: 1px solid #1f7a3f;
+}
+
+.recent-observations {
+  padding: 1rem;
+}
+
+.recent-observations h2 {
+  margin: 0;
+  color: #c8f2d9;
+}
+
+.recent-observations-subtitle {
+  margin-top: 0.25rem;
+  margin-bottom: 0.8rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.recent-slideshow {
+  position: relative;
+  border: 1px solid var(--line-soft);
+  background: #07100b;
+  min-height: 300px;
+}
+
+.recent-empty {
+  margin: 0;
+  padding: 1rem;
+  color: var(--muted);
+}
+
+.recent-slide {
+  display: none;
+}
+
+.recent-slide.active {
+  display: block;
+}
+
+.recent-slide a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.recent-slide img {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+  display: block;
+}
+
+.recent-caption {
+  padding: 0.55rem 0.7rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.88rem;
+  color: #b8dcc6;
 }
