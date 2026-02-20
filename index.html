@@ -16,9 +16,9 @@
     <main class="layout">
       <aside class="sidebar panel">
         <div class="species-search-box" role="search" aria-label="種名検索">
-          <input id="speciesSearchInput" class="species-search-input" type="search" placeholder="種名を検索（和名・学名）" list="speciesSearchSuggestions" autocomplete="off" />
+          <input id="speciesSearchInput" class="species-search-input" type="search" placeholder="種名を検索（和名・学名）" autocomplete="off" />
           <button id="speciesSearchBtn" class="species-search-button" type="button">検索</button>
-          <datalist id="speciesSearchSuggestions"></datalist>
+          <div id="speciesSearchDropdown" class="species-search-dropdown hidden" role="listbox" aria-label="検索候補"></div>
         </div>
 
         <section class="sidebar-top">

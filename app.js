@@ -110,7 +110,8 @@ const dom = {
   researchOnlyToggle: document.getElementById("researchOnlyToggle"),
   speciesSearchInput: document.getElementById("speciesSearchInput"),
   speciesSearchBtn: document.getElementById("speciesSearchBtn"),
-  speciesSearchSuggestions: document.getElementById("speciesSearchSuggestions"),
+  speciesSearchDropdown: document.getElementById("speciesSearchDropdown"),
+  speciesSearchBox: document.querySelector(".species-search-box"),
   homeBtn: document.getElementById("homeBtn"),
   obsLinkBtn: document.getElementById("obsLinkBtn"),
   seasonalityChart: document.getElementById("seasonalityChart"),
@@ -372,15 +373,30 @@ function wireEvents() {
       updateSearchSuggestions(dom.speciesSearchInput.value || "");
     });
 
+    dom.speciesSearchInput.addEventListener("blur", () => {
+      setTimeout(hideSearchSuggestions, 120);
+    });
+
     dom.speciesSearchInput.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        hideSearchSuggestions();
+        return;
+      }
       if (event.key !== "Enter") return;
       event.preventDefault();
+      hideSearchSuggestions();
       performSpeciesSearch(dom.speciesSearchInput.value || "").catch((error) => {
         console.error(error);
         setStatus("検索処理でエラーが発生しました。");
       });
     });
   }
+
+  document.addEventListener("click", (event) => {
+    if (!dom.speciesSearchBox) return;
+    if (dom.speciesSearchBox.contains(event.target)) return;
+    hideSearchSuggestions();
+  });
 
   if (dom.homeBtn) {
     dom.homeBtn.addEventListener("click", () => {
@@ -425,12 +441,21 @@ function normalizeSearchText(text) {
   return toHiragana((text || "").trim()).toLocaleLowerCase("ja-JP");
 }
 
-function updateSearchSuggestions(rawQuery) {
-  if (!dom.speciesSearchSuggestions) return;
-  const query = normalizeSearchText(rawQuery || "");
-  dom.speciesSearchSuggestions.innerHTML = "";
+function hideSearchSuggestions() {
+  if (!dom.speciesSearchDropdown) return;
+  dom.speciesSearchDropdown.classList.add("hidden");
+  dom.speciesSearchDropdown.innerHTML = "";
+}
 
-  if (!query) return;
+function updateSearchSuggestions(rawQuery) {
+  if (!dom.speciesSearchDropdown) return;
+  const query = normalizeSearchText(rawQuery || "");
+  dom.speciesSearchDropdown.innerHTML = "";
+
+  if (!query) {
+    hideSearchSuggestions();
+    return;
+  }
 
   const candidates = [];
   for (const taxon of state.species) {
@@ -445,11 +470,32 @@ function updateSearchSuggestions(rawQuery) {
     if (candidates.length >= 10) break;
   }
 
-  for (const value of candidates.slice(0, 10)) {
-    const option = document.createElement("option");
-    option.value = value;
-    dom.speciesSearchSuggestions.appendChild(option);
+  if (candidates.length === 0) {
+    hideSearchSuggestions();
+    return;
   }
+
+  for (const value of candidates.slice(0, 10)) {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "species-suggestion-item";
+    item.textContent = value;
+    item.setAttribute("role", "option");
+    item.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
+    item.addEventListener("click", () => {
+      if (dom.speciesSearchInput) dom.speciesSearchInput.value = value;
+      hideSearchSuggestions();
+      performSpeciesSearch(value).catch((error) => {
+        console.error(error);
+        setStatus("検索処理でエラーが発生しました。");
+      });
+    });
+    dom.speciesSearchDropdown.appendChild(item);
+  }
+
+  dom.speciesSearchDropdown.classList.remove("hidden");
 }
 
 async function performSpeciesSearch(rawQuery) {
