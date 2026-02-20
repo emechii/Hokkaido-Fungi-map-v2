@@ -81,6 +81,7 @@ body {
   display: block;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
 }
 
 .sidebar-top {
@@ -172,7 +173,9 @@ body {
 .sidebar-list-section {
   flex: 1 1 auto;
   min-height: 0;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 #listTitle {
@@ -231,9 +234,10 @@ body {
 }
 
 .sidebar-controls {
-  display: block;
+  display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
@@ -248,6 +252,7 @@ body {
   display: inline-flex;
   flex-wrap: nowrap;
   gap: 4px;
+  margin-top: 2px;
 }
 
 .second-row {
@@ -322,7 +327,8 @@ body {
   gap: 3px;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 6px;
   overscroll-behavior: contain;
 }
@@ -710,7 +716,7 @@ body {
   }
 
   .sidebar-controls {
-    gap: 4px;
+    gap: 6px;
     margin-bottom: 6px;
   }
 
