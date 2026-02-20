@@ -473,7 +473,6 @@ function updateSearchSuggestions(rawQuery) {
       : sciName;
 
     matches.push({ taxon, label });
-    if (matches.length >= 10) break;
   }
 
   if (matches.length === 0) {
