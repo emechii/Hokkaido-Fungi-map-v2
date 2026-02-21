@@ -55,6 +55,14 @@ body {
   line-height: 1.35;
 }
 
+.site-note {
+  margin: 0.2rem auto 0;
+  max-width: 920px;
+  color: #7f9988;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
 
 .list-heading {
   margin: 0 0 6px;
