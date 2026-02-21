@@ -32,7 +32,14 @@ body {
   position: relative;
   border-bottom: 1px solid var(--line);
   text-align: center;
-  padding: 1rem 0.75rem;
+  padding: 0.85rem 0.75rem;
+}
+
+.site-title-image {
+  display: block;
+  width: min(860px, 92vw);
+  height: auto;
+  margin: 0.1rem auto 0;
 }
 
 .site-header h1 {
@@ -676,16 +683,9 @@ body {
     left: 8px;
   }
 
-  .site-header h1 {
-    font-size: 1.36rem;
-  }
-
-  .subtitle {
-    font-size: 0.54rem;
-  }
-
-  .site-note {
-    font-size: 0.44rem;
+  .site-title-image {
+    width: min(92vw, 620px);
+    margin-top: 0.1rem;
   }
 
   .recent-observations h2 {
