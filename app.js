@@ -126,6 +126,7 @@ initialize().catch((error) => {
   setStatus("データ取得に失敗しました。時間をおいて再読み込みしてください。");
 });
 
+
 async function initialize() {
   wireEvents();
   dom.detailCard?.classList.add("hidden");

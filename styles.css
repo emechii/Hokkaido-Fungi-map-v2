@@ -19,6 +19,16 @@ body {
   color: var(--text);
 }
 
+.site-corner-logo {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 6px);
+  left: calc(env(safe-area-inset-left, 0px) + 6px);
+  width: 56px;
+  height: auto;
+  z-index: 40;
+  pointer-events: none;
+}
+
 .site-header {
   border-bottom: 1px solid var(--line);
   text-align: center;
@@ -28,12 +38,21 @@ body {
 .site-header h1 {
   margin: 0;
   letter-spacing: 0.08em;
+  font-size: 2.9rem;
 }
 
 .subtitle {
   margin-top: 0.3rem;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.78rem;
+}
+
+.site-note {
+  margin: 0.2rem auto 0;
+  max-width: 920px;
+  color: #7f9988;
+  font-size: 0.62rem;
+  line-height: 1.35;
 }
 
 .site-note {
@@ -659,6 +678,24 @@ body {
 }
 
 @media (max-width: 760px) {
+  .site-corner-logo {
+    width: 44px;
+    top: calc(env(safe-area-inset-top, 0px) + 4px);
+    left: calc(env(safe-area-inset-left, 0px) + 4px);
+  }
+
+  .site-header h1 {
+    font-size: 1.68rem;
+  }
+
+  .subtitle {
+    font-size: 0.62rem;
+  }
+
+  .site-note {
+    font-size: 0.5rem;
+  }
+
   .recent-observations h2 {
     font-size: 0.78rem;
   }
