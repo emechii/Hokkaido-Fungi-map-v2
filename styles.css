@@ -20,46 +20,38 @@ body {
 }
 
 .site-corner-logo {
-  position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 6px);
-  left: calc(env(safe-area-inset-left, 0px) + 6px);
-  width: 56px;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 46px;
   height: auto;
-  z-index: 40;
   pointer-events: none;
 }
 
 .site-header {
+  position: relative;
   border-bottom: 1px solid var(--line);
   text-align: center;
-  padding: 1.2rem 1rem;
+  padding: 1rem 0.75rem;
 }
 
 .site-header h1 {
   margin: 0;
   letter-spacing: 0.08em;
-  font-size: 2.9rem;
+  font-size: 2.35rem;
 }
 
 .subtitle {
   margin-top: 0.3rem;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.64rem;
 }
 
 .site-note {
   margin: 0.2rem auto 0;
   max-width: 920px;
   color: #7f9988;
-  font-size: 0.62rem;
-  line-height: 1.35;
-}
-
-.site-note {
-  margin: 0.2rem auto 0;
-  max-width: 920px;
-  color: #7f9988;
-  font-size: 0.72rem;
+  font-size: 0.52rem;
   line-height: 1.35;
 }
 
@@ -679,21 +671,21 @@ body {
 
 @media (max-width: 760px) {
   .site-corner-logo {
-    width: 44px;
-    top: calc(env(safe-area-inset-top, 0px) + 4px);
-    left: calc(env(safe-area-inset-left, 0px) + 4px);
+    width: 36px;
+    top: 8px;
+    left: 8px;
   }
 
   .site-header h1 {
-    font-size: 1.68rem;
+    font-size: 1.36rem;
   }
 
   .subtitle {
-    font-size: 0.62rem;
+    font-size: 0.54rem;
   }
 
   .site-note {
-    font-size: 0.5rem;
+    font-size: 0.44rem;
   }
 
   .recent-observations h2 {
