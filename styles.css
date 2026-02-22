@@ -688,6 +688,12 @@ body {
     margin-top: 0;
   }
 
+  .promo-discord-button {
+    padding: 0.11rem 0.25rem;
+    font-size: 0.31rem;
+  }
+
+
   .recent-observations h2 {
     font-size: 0.78rem;
   }
@@ -974,16 +980,23 @@ body {
 .promo-discord-button {
   display: inline-block;
   margin: 8px auto 2px;
-  padding: 0.11rem 0.25rem;
+  padding: 0.33rem 0.75rem;
   border: 1px solid #9370DB;
   color: var(--text);
   background: #0b1a12;
   text-decoration: none;
-  font-size: 0.31rem;
+  font-size: 0.93rem;
 }
 
 .home-promo {
   text-align: center;
+}
+
+@media (max-width: 760px) {
+  .promo-discord-button {
+    padding: 0.11rem 0.25rem;
+    font-size: 0.31rem;
+  }
 }
 
 .recent-slide {
