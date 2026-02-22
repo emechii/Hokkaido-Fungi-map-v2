@@ -486,6 +486,12 @@ body {
   margin: 0 auto;
 }
 
+.photo-grid-fallback-image {
+  display: block;
+  width: min(680px, 100%);
+  margin: 0 auto;
+}
+
 .thumb-card {
   min-width: 0;
 }
@@ -848,6 +854,7 @@ body {
   }
 
   .seasonality-section h3,
+  .distribution-section h3,
   .meta-grid,
   .distribution-summary,
   .obs-link-button,
