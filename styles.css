@@ -966,8 +966,24 @@ body {
 
 .home-promo-image {
   display: block;
-  width: 100%;
+  width: 94%;
+  margin: 0 auto;
   height: auto;
+}
+
+.promo-discord-button {
+  display: inline-block;
+  margin: 8px auto 2px;
+  padding: 0.11rem 0.25rem;
+  border: 1px solid #9370DB;
+  color: var(--text);
+  background: #0b1a12;
+  text-decoration: none;
+  font-size: 0.31rem;
+}
+
+.home-promo {
+  text-align: center;
 }
 
 .recent-slide {
