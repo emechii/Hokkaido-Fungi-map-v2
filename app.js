@@ -790,6 +790,16 @@ function renderPhotos(taxon, observations) {
     fallbackImage.alt = "All rights fungi";
     fallbackImage.className = "photo-grid-fallback-image";
     dom.photoGrid.appendChild(fallbackImage);
+
+    if (state.projectId) {
+      const observationsUrl = new URL("https://www.inaturalist.org/observations");
+      observationsUrl.searchParams.set("project_id", PROJECT_SLUG);
+      observationsUrl.searchParams.set("taxon_id", String(taxon.id));
+
+      dom.obsLinkBtn.href = observationsUrl.toString();
+      dom.obsLinkBtn.classList.remove("hidden");
+    }
+
     return;
   }
 
