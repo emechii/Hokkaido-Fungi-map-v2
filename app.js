@@ -747,6 +747,19 @@ async function selectTaxon(taxon) {
 
 }
 
+function normalizeLicenseCode(code) {
+  return String(code || "").trim().toUpperCase();
+}
+
+function isPhotoLicenseAllowed(photoLicense, observationLicense = "") {
+  const license = normalizeLicenseCode(photoLicense || observationLicense);
+  if (!license) return false;
+  if (license === "C") return false;
+  if (license === "COPYRIGHT") return false;
+  if (license === "ALL RIGHTS RESERVED") return false;
+  return true;
+}
+
 function renderPhotos(taxon, observations) {
   dom.photoGrid.innerHTML = "";
   dom.obsLinkBtn.classList.add("hidden");
@@ -759,13 +772,15 @@ function renderPhotos(taxon, observations) {
       const faves = Number(obs.faves_count || 0);
       const isResearch = obs.quality_grade === "research";
       const score = (isResearch ? 1000 : 0) + faves * 10;
-      return (obs.photos || []).map((photo) => ({
-        imageUrl: photo.url?.replace("square", "large"),
-        obsUrl,
-        userName,
-        score,
-        licenseCode: String(photo.license_code || obs.license_code || "").toUpperCase(),
-      }));
+      return (obs.photos || [])
+        .filter((photo) => isPhotoLicenseAllowed(photo?.license_code, obs?.license_code))
+        .map((photo) => ({
+          imageUrl: photo.url?.replace("square", "large"),
+          obsUrl,
+          userName,
+          score,
+          licenseCode: normalizeLicenseCode(photo.license_code || obs.license_code || ""),
+        }));
     })
     .filter((item) => item.imageUrl && item.obsUrl);
 
@@ -1335,17 +1350,22 @@ async function loadRecentObservationsSlideshow(projectId) {
     }
 
     const slides = (data?.results || [])
-      .filter((obs) => (obs.photos || []).length > 0)
-      .slice(0, RECENT_OBS_SLIDES)
-      .map((obs) => ({
-        imageUrl: obs.photos?.[0]?.url?.replace("square", "large"),
-        observationUrl: obs.uri || `https://www.inaturalist.org/observations/${obs.id}`,
-        taxonName: obs.taxon?.name || "Unknown",
-        taxonJaName: japaneseNameOrFallback(obs.taxon?.preferred_common_name),
-        observedAt: formatRecentObservedAt(obs),
-        observer: obs.user?.login || "unknown",
-      }))
-      .filter((item) => item.imageUrl);
+      .map((obs) => {
+        const firstLicensedPhoto = (obs.photos || []).find((photo) =>
+          isPhotoLicenseAllowed(photo?.license_code, obs?.license_code)
+        );
+        if (!firstLicensedPhoto) return null;
+        return {
+          imageUrl: firstLicensedPhoto.url?.replace("square", "large"),
+          observationUrl: obs.uri || `https://www.inaturalist.org/observations/${obs.id}`,
+          taxonName: obs.taxon?.name || "Unknown",
+          taxonJaName: japaneseNameOrFallback(obs.taxon?.preferred_common_name),
+          observedAt: formatRecentObservedAt(obs),
+          observer: obs.user?.login || "unknown",
+        };
+      })
+      .filter((item) => item && item.imageUrl)
+      .slice(0, RECENT_OBS_SLIDES);
 
     renderRecentObservationsSlides(slides);
   } catch (error) {
