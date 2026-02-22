@@ -785,7 +785,11 @@ function renderPhotos(taxon, observations) {
     .filter((item) => item.imageUrl && item.obsUrl);
 
   if (photoItems.length === 0) {
-    dom.photoGrid.innerHTML = "<p>写真付き観察が見つかりませんでした（ローカル表示モード）。</p>";
+    const fallbackImage = document.createElement("img");
+    fallbackImage.src = "assets/img/Allrightsfungi.png";
+    fallbackImage.alt = "All rights fungi";
+    fallbackImage.className = "photo-grid-fallback-image";
+    dom.photoGrid.appendChild(fallbackImage);
     return;
   }
 
