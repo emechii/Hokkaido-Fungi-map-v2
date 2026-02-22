@@ -94,6 +94,7 @@ const dom = {
   content: document.querySelector(".content"),
   recentObsCard: document.getElementById("recentObsCard"),
   recentObsSlideshow: document.getElementById("recentObsSlideshow"),
+  homePromoCard: document.getElementById("homePromoCard"),
   detailCard: document.getElementById("detailCard"),
   detailLineage: document.getElementById("detailLineage"),
   detailJaName: document.getElementById("detailJaName"),
@@ -131,6 +132,7 @@ async function initialize() {
   wireEvents();
   dom.detailCard?.classList.add("hidden");
   dom.recentObsCard?.classList.remove("hidden");
+  dom.homePromoCard?.classList.remove("hidden");
 
   // プレビュー（file://）でも最低限一覧が見えるよう、埋め込み種データを先に描画。
   setSpeciesData(normalizeSpeciesArray(EMBEDDED_LOCAL_SPECIES));
@@ -424,6 +426,7 @@ function wireEvents() {
       state.selectedTaxonId = null;
       dom.detailCard?.classList.add("hidden");
       dom.recentObsCard?.classList.remove("hidden");
+      dom.homePromoCard?.classList.remove("hidden");
       if (dom.distributionLayer) dom.distributionLayer.innerHTML = "";
       renderSpeciesList();
       setStatus(`${state.species.length}種を取得しました。左側の一覧から選択してください。`);
@@ -713,6 +716,7 @@ async function selectTaxon(taxon) {
 
   dom.detailCard.classList.remove("hidden");
   dom.recentObsCard?.classList.add("hidden");
+  dom.homePromoCard?.classList.add("hidden");
   dom.detailSciName.textContent = taxon.name;
   dom.detailJaName.textContent = taxon.japaneseName === "和名なし" ? "" : taxon.japaneseName;
   if (dom.detailLineage) dom.detailLineage.textContent = "分類情報を取得中...";
