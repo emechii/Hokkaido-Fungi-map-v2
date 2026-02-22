@@ -785,7 +785,21 @@ function renderPhotos(taxon, observations) {
     .filter((item) => item.imageUrl && item.obsUrl);
 
   if (photoItems.length === 0) {
-    dom.photoGrid.innerHTML = "<p>写真付き観察が見つかりませんでした（ローカル表示モード）。</p>";
+    const fallbackImage = document.createElement("img");
+    fallbackImage.src = "assets/img/Allrightsfungi.png";
+    fallbackImage.alt = "All rights fungi";
+    fallbackImage.className = "photo-grid-fallback-image";
+    dom.photoGrid.appendChild(fallbackImage);
+
+    if (state.projectId) {
+      const observationsUrl = new URL("https://www.inaturalist.org/observations");
+      observationsUrl.searchParams.set("project_id", PROJECT_SLUG);
+      observationsUrl.searchParams.set("taxon_id", String(taxon.id));
+
+      dom.obsLinkBtn.href = observationsUrl.toString();
+      dom.obsLinkBtn.classList.remove("hidden");
+    }
+
     return;
   }
 
