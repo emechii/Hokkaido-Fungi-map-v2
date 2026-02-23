@@ -14,6 +14,145 @@ const RECENT_OBS_SLIDES = 5;
 const RECENT_OBS_FETCH = 30;
 const RECENT_SLIDE_INTERVAL_MS = 4000;
 
+const FUNGIHKD_FULL_TRIGGER = "fungihkdfull";
+const FUNGIHKD_FULL_RAW_LIST = `
+Acanthofungus ahmadii	タチカタウロコタケ
+Agaricus abruptibulbus	ウスキモリノカサ
+Agaricus arvensis	シロオオハラタケ
+Agaricus campestris	ハラタケ
+Agaricus essettei	和名なし
+Agaricus jezoënsis	キハラタケ
+Agaricus moelleri	ナカグロモリノカサ
+Agaricus silvaticus	モリハラタケ
+Agaricus subperonatus	和名なし
+Agrocybe acericola	クチキフミヅキタケ
+Agrocybe erebia	ツチナメコ
+Agrocybe farinacea	ツバナシフミヅキタケ
+Agrocybe firma	ツバナシヤナギマツタケ
+Agrocybe pediades	ハタケキノコ
+Agrocybe praecox	フミヅキタケ
+Akanthomyces tuberclatus	ガヤドリナガミノツブタケ
+Akanthomyces sp.	ガヤドリナガミノツブタケ近縁種
+Albatrellus cristatus	ザボンタケ
+Albatrellus confluens	ニンギョウタケ
+Albatrellus ovinus	ニンギョウタケモドキ
+Albatrellus pes-caprae	センニンタケ
+Aleuria aurantia	ヒイロチャワンタケ
+Aleuria rhenana	キンチャワンタケ
+Alpova diplophloeus	和名なし
+Amanita avellaneosquamosa	アクイロウロコツルタケ
+Amanita caesareoides	タマゴタケ
+Amanita ceciliae	テングツルタケ
+Amanita cheelii	オオツルタケ
+Amanita citrina	コタマゴテングタケ
+Amanita citrina var. alba	シロコタマゴテングタケ
+Amanita clarisquamosa	シロウロコツルタケ
+Amanita crocea	コガネツルタケ
+Amanita farinosa	ヒメコナカブリツルタケ
+Amanita flavipes	コガネテングタケ
+Amanita fulva	カバイロツルタケ
+Amanita griseoturcosa	アオミドリタマゴテングタケ
+Amanita ibotengutake	イボテングタケ
+Amanita imazekii	ミヤマタマゴタケ
+Amanita longistriata	タマゴテングタケモドキ
+Amanita muscaria	ベニテングタケ
+Amanita oberwinkleriana	ニオイドクツルタケ
+Amanita onusta	和名なし
+Amanita orientifulva	和名なし
+Amanita orientigemmata	ウスキテングタケ
+Amanita pallidorosea	アケボノドクツルタケ
+Amanita pantherina	テングタケ
+Amanita porphyria	コテングタケ
+Amanita pseudoporphyria	コテングタケモドキ
+Amanita regalis	オウテングタケ
+Amanita rhodophylla	タマゴテングタケモドキ
+Amanita rubescens	ガンタケ
+Amanita rubrovolvata	ヒメベニテングタケ
+Amanita satotamagotake	サトタマゴタケ
+Amanita sepiacea	テングタケモドキ
+Amanita sinensis	ハイカグラテングタケ
+Amanita sphaerobulbosa	タマシロオニタケ
+Amanita spissacea	ヘビキノコモドキ
+Amanita subjunquillea	タマゴタケモドキ
+Amanita vaginata	ツルタケ
+Amanita virosa	ドクツルタケ
+Amanita volvata	フクロツルタケ
+Amanita sp.	ヒメテングタケ(仮)
+Ampulloclitocybe clavipes	ホテイシメジ
+Apioperdon pyriforme	タヌキノチャブクロ
+Armillaria jezoensis	コバリナラタケ
+Armillaria mellea	ナラタケ
+Astraeus hygrometricus	ツチグリ
+Atheniella adonis	コウバイタケ
+Aureoboletus mirabilis	オオキノボリイグチ
+Auricularia americana	アメリカキクラゲ
+Auricularia cornea	ナンカイキクラゲ
+Auricularia mesenterica	ヒダキクラゲ
+Auriscalpium vulgare	マツカサタケ
+Baorangia pseudocalopus	ニセアシベニイグチ
+Bjerkandera adusta	ヤケイロタケ
+Boletus edulis	ヤマドリタケ
+Caloboletus calopus	アシベニイグチ
+Cantharellus cibarius	アンズタケ
+Chondrostereum purpureum	ムラサキウロコタケ
+Clavaria zollingeri	ムラサキホウキタケ
+Clitocybe gibba	カヤタケ
+Collybia cirrata	ホコリヤグラタケ
+Coprinellus micaceus	キララタケ
+Coprinopsis atramentaria	ヒトヨタケ
+Cordyceps militaris	サナギタケ
+Cortinarius violaceus	ムラサキフウセンタケ
+Craterellus cornucopioides	クロラッパタケ
+Cuphophyllus pratensis	ハダイロガサ
+Cyanoboletus pulverulentus	イロガワリ
+Dacrymyces stillatus	ヒメアカキクラゲ
+Daedalea dickinsii	ホウロクタケ
+Entoloma rhodopolium	クサウラベニタケ
+Exidia glandulosa	ヒメキクラゲ
+Flammulina velutipes	エノキタケ
+Fomitopsis pinicola	ツガサルノコシカケ
+Ganoderma sichuanense	マンネンタケ
+Gomphus clavatus	ラッパタケ
+Grifola frondosa	マイタケ
+Gyromitra esculenta	シャグマアミガサタケ
+Hericium erinaceus	ヤマブシタケ
+Hydnum repandum	カノシタ
+Hypholoma lateritium	クリタケ
+Hypsizygus marmoreus	ブナシメジ
+Imleria badia	ニセイロガワリ
+Inonotus obliquus	カバノアナタケ
+Laccaria amethystina	ウラムラサキ
+Lactarius akahatsu	アカハツ
+Lentinula edodes	シイタケ
+Lepiota cristata	キツネノカラカサ
+Lycoperdon perlatum	ホコリタケ
+Macrolepiota procera	カラカサタケ
+Morchella esculenta	アミガサタケ
+Mutinus caninus	キツネノロウソク
+Mycena pura	サクラタケ
+Omphalotus japonicus	ツキヨタケ
+Panellus serotinus	ムキタケ
+Pholiota microspora	ナメコ
+Pleurotus ostreatus	ヒラタケ
+Pluteus cervinus	ウラベニガサ
+Polyozellus multiplex	カラスタケ
+Ramaria botrytis	ホウキタケ
+Russula virescens	アイタケ
+Sarcodon aspratus	コウタケ
+Schizophyllum commune	スエヒロタケ
+Sparassis crispa	ハナビラタケ
+Strobilomyces strobilaceus	オニイグチ
+Suillus luteus	ヌメリイグチ
+Trametes versicolor	カワラタケ
+Trichoderma cornu-damae	カエンタケ
+Tricholoma matsutake	マツタケ
+Tuber himalayense	アジアクロセイヨウショウロ
+Volvariella bombycina	キヌオオフクロタケ
+Xerocomus zelleri	ビロードコウジタケ
+Xylaria polymorpha	マメザヤタケ
+`;
+
+
 const DEFAULT_BOUNDS = { minLon: 139.2, maxLon: 146.4, minLat: 41.2, maxLat: 45.9 };
 const MAP_CANVAS = { x: 20, y: 20, width: 560, height: 320 };
 
@@ -471,6 +610,59 @@ function normalizeSearchText(text) {
   return toHiragana((text || "").trim()).toLocaleLowerCase("ja-JP");
 }
 
+function parseFungiHKDFullSpecies() {
+  const rows = [];
+  const lines = FUNGIHKD_FULL_RAW_LIST.split("\n");
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const pair = trimmed.split(/\t+/);
+    if (pair.length < 2) continue;
+
+    const name = (pair[0] || "").trim();
+    const preferredCommonName = (pair[1] || "").trim();
+    if (!name || !preferredCommonName) continue;
+
+    rows.push({ name, preferred_common_name: preferredCommonName });
+  }
+  return rows;
+}
+
+function mergeFungiHKDFullSpecies(baseSpecies) {
+  const merged = [...baseSpecies];
+  const seen = new Set(baseSpecies.map((taxon) => normalizeSearchText(taxon.name || "")));
+  const additions = [];
+
+  for (const row of parseFungiHKDFullSpecies()) {
+    const key = normalizeSearchText(row.name);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+
+    const id = 900000000 + additions.length;
+    additions.push({
+      id,
+      name: row.name,
+      preferred_common_name: row.preferred_common_name,
+      count: 0,
+    });
+  }
+
+  return {
+    merged: normalizeSpeciesArray([...merged, ...additions]),
+    addedCount: additions.length,
+  };
+}
+
+function applyFungiHKDFullMode() {
+  const { merged, addedCount } = mergeFungiHKDFullSpecies(state.allSpecies);
+  state.allSpecies = merged;
+  applySpeciesFilter();
+  renderSpeciesList();
+  hideSearchSuggestions();
+  setStatus(`FungiHKDfullを適用: ${addedCount}件を追加（重複除外）しました。`);
+}
+
 function hideSearchSuggestions() {
   if (!dom.speciesSearchDropdown) return;
   dom.speciesSearchDropdown.classList.add("hidden");
@@ -558,6 +750,10 @@ async function performSpeciesSearch(rawQuery) {
   }
 
   const q = normalizeSearchText(query);
+  if (q === FUNGIHKD_FULL_TRIGGER) {
+    applyFungiHKDFullMode();
+    return;
+  }
   const findMatch = (predicate) => state.species.find((taxon) => {
     const jp = normalizeSearchText(taxon.japaneseName || "");
     const sci = normalizeSearchText(taxon.name || "");
