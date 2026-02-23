@@ -921,7 +921,7 @@ function createListButton(taxon) {
 
   const primaryEl = document.createElement("span");
   primaryEl.className = `primary-name${inJpMode ? "" : " scientific-text"}`;
-  primaryEl.textContent = taxon.isOriginalSpecies ? `★ ${primary}` : primary;
+  primaryEl.textContent = state.fungiHKDFullActive && taxon.isOriginalSpecies ? `★ ${primary}` : primary;
 
   const sub = document.createElement("small");
   sub.className = inJpMode ? "scientific-text" : "";
