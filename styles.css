@@ -42,6 +42,13 @@ body {
   margin: 0 auto;
 }
 
+.site-title-fallback {
+  margin: 8px 0;
+  font-size: 1.4rem;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
 .site-header h1 {
   margin: 0;
   letter-spacing: 0.08em;
@@ -274,6 +281,10 @@ body {
   flex-wrap: nowrap;
   gap: 4px;
   margin-top: 2px;
+}
+
+.restore-species-button {
+  margin-left: 10px;
 }
 
 .second-row {
@@ -802,6 +813,10 @@ body {
     font-size: 0.58rem;
   }
 
+  .restore-species-button {
+    margin-left: 8px;
+  }
+
   .quality-label {
     font-size: 0.42rem;
   }
@@ -854,6 +869,7 @@ body {
   }
 
   .seasonality-section h3,
+  .distribution-section h3,
   .meta-grid,
   .distribution-summary,
   .obs-link-button,
@@ -1087,5 +1103,15 @@ body {
     font-size: 0.3rem;
     padding: 0.1rem 0.2rem;
     row-gap: 0;
+  }
+}
+
+
+@media (min-width: 768px) {
+  .recent-slideshow,
+  .home-promo-image {
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
