@@ -1,0 +1,9 @@
+# FungiHKD full species list template
+# Format: 学名<TAB>和名
+# - 1行に1種
+# - 和名が空欄の場合は「和名なし」を記載
+# - (空欄) / （空欄）も読み込み時に和名なしへ正規化されます
+
+# ここに下記のようにコピペしてください:
+# Acanthofungus ahmadii	タチカタウロコタケ
+# Agaricus abruptibulbus	ウスキモリノカサ
