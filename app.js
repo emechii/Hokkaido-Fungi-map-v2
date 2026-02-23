@@ -1101,9 +1101,11 @@ function renderPhotos(taxon, observations) {
     .filter((item) => item.imageUrl && item.obsUrl);
 
   if (photoItems.length === 0) {
+    const noObservationInSpecialList = state.fungiHKDFullActive && taxon.isOriginalSpecies === false && observations.length === 0;
+
     const fallbackImage = document.createElement("img");
-    fallbackImage.src = "assets/img/Allrightsfungi.png";
-    fallbackImage.alt = "All rights fungi";
+    fallbackImage.src = noObservationInSpecialList ? "assets/img/no-observation.svg" : "assets/img/Allrightsfungi.png";
+    fallbackImage.alt = noObservationInSpecialList ? "No observation" : "All rights fungi";
     fallbackImage.className = "photo-grid-fallback-image";
     dom.photoGrid.appendChild(fallbackImage);
 
