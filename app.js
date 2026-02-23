@@ -897,7 +897,35 @@ function renderSpeciesList() {
     if (inJpMode) {
       const aJp = (a.japaneseName || a.name || "").trim();
       const bJp = (b.japaneseName || b.name || "").trim();
-      return aJp.localeCompare(bJp, "ja");
+      const aSci = (a.name || "").trim();
+      const bSci = (b.name || "").trim();
+      const aGroup = groupByGojuon(aJp);
+      const bGroup = groupByGojuon(bJp);
+      const aGroupIndex = GOJUON_ORDER.indexOf(aGroup);
+      const bGroupIndex = GOJUON_ORDER.indexOf(bGroup);
+      const aOrder = aGroupIndex === -1 ? Number.MAX_SAFE_INTEGER : aGroupIndex;
+      const bOrder = bGroupIndex === -1 ? Number.MAX_SAFE_INTEGER : bGroupIndex;
+      if (aOrder != bOrder) return aOrder - bOrder;
+
+      if (aGroup === "その他" && bGroup === "その他") {
+        return aSci.localeCompare(bSci, "en", { sensitivity: "base" });
+      }
+
+      const aIsAkaKyo = /^赤きょう病菌/.test(aJp);
+      const bIsAkaKyo = /^赤きょう病菌/.test(bJp);
+      if (aGroup === "あ" && bGroup === "あ" && aIsAkaKyo !== bIsAkaKyo) {
+        return aIsAkaKyo ? 1 : -1;
+      }
+
+      const aIsShiroKyo = /^白きょう病菌/.test(aJp);
+      const bIsShiroKyo = /^白きょう病菌/.test(bJp);
+      if (aGroup === "し" && bGroup === "し" && aIsShiroKyo !== bIsShiroKyo) {
+        return aIsShiroKyo ? 1 : -1;
+      }
+
+      const jpCmp = aJp.localeCompare(bJp, "ja");
+      if (jpCmp !== 0) return jpCmp;
+      return aSci.localeCompare(bSci, "en", { sensitivity: "base" });
     }
 
     const aSci = (a.name || "").trim();
@@ -1050,17 +1078,35 @@ async function selectTaxon(taxon) {
   state.currentObservations = [];
   renderSeasonality({ research: Array(12).fill(0), nonResearch: Array(12).fill(0) });
 
-  const observations = state.projectId ? await fetchObservationsForTaxon(taxon.id) : [];
-  state.currentObservations = observations;
-  renderPhotos(taxon, observations);
-  renderDistribution(observations);
-  renderSeasonality(countsByQualityFromObservations(observations));
-
-  if (!state.projectId) {
-    dom.distributionSummary.textContent = "ローカル表示中のため分布ポイント取得はスキップしました。";
+  const shouldSkipObservationFetch = state.fungiHKDFullActive && taxon.isOriginalSpecies === false;
+  if (!state.projectId || shouldSkipObservationFetch) {
+    const observations = [];
+    state.currentObservations = observations;
+    renderPhotos(taxon, observations);
+    renderDistribution(observations);
+    renderSeasonality(countsByQualityFromObservations(observations));
+    dom.distributionSummary.textContent = !state.projectId
+      ? "ローカル表示中のため分布ポイント取得はスキップしました。"
+      : "iNaturalistに観察記録がないため表示できません。";
     return;
   }
 
+  try {
+    const observations = await fetchObservationsForTaxon(taxon.id);
+    state.currentObservations = observations;
+    renderPhotos(taxon, observations);
+    renderDistribution(observations);
+    renderSeasonality(countsByQualityFromObservations(observations));
+  } catch (error) {
+    console.warn("観察データ取得失敗", error);
+    const observations = [];
+    state.currentObservations = observations;
+    renderPhotos(taxon, observations);
+    renderDistribution(observations);
+    renderSeasonality(countsByQualityFromObservations(observations));
+    dom.distributionSummary.textContent = "観察データの取得に失敗しました。";
+    setStatus("観察データの取得に失敗しました。");
+  }
 }
 
 function normalizeLicenseCode(code) {
@@ -1109,7 +1155,7 @@ function renderPhotos(taxon, observations) {
     fallbackImage.className = "photo-grid-fallback-image";
     dom.photoGrid.appendChild(fallbackImage);
 
-    if (state.projectId) {
+    if (state.projectId && !noObservationInSpecialList) {
       const observationsUrl = new URL("https://www.inaturalist.org/observations");
       observationsUrl.searchParams.set("project_id", PROJECT_SLUG);
       observationsUrl.searchParams.set("taxon_id", String(taxon.id));
