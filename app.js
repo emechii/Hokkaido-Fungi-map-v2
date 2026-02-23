@@ -15,6 +15,7 @@ const RECENT_OBS_FETCH = 30;
 const RECENT_SLIDE_INTERVAL_MS = 4000;
 
 const FUNGIHKD_FULL_TRIGGER = "fungihkdfull";
+const FUNGIHKD_FULL_TSV_PATH = "./data/fungihkdfull.tsv";
 const FUNGIHKD_FULL_RAW_LIST = `
 Acanthofungus ahmadii	タチカタウロコタケ
 Agaricus abruptibulbus	ウスキモリノカサ
@@ -621,12 +622,24 @@ function normalizeSearchText(text) {
   return toHiragana((text || "").trim()).toLocaleLowerCase("ja-JP");
 }
 
-function parseFungiHKDFullSpecies() {
+async function loadFungiHKDFullRawList() {
+  try {
+    const response = await fetch(`${FUNGIHKD_FULL_TSV_PATH}?t=${Date.now()}`);
+    if (!response.ok) throw new Error(`status ${response.status}`);
+    const text = await response.text();
+    if (text.trim()) return text;
+  } catch (error) {
+    console.warn("FungiHKDfull TSV の読み込みに失敗。埋め込みデータへフォールバックします", error);
+  }
+  return FUNGIHKD_FULL_RAW_LIST;
+}
+
+function parseFungiHKDFullSpecies(rawText) {
   const rows = [];
-  const lines = FUNGIHKD_FULL_RAW_LIST.split("\n");
+  const lines = String(rawText || "").split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed) continue;
+    if (!trimmed || trimmed.startsWith("#")) continue;
 
     const pair = trimmed.includes("\t")
       ? trimmed.split(/\t+/)
@@ -645,13 +658,13 @@ function parseFungiHKDFullSpecies() {
   return rows;
 }
 
-function mergeFungiHKDFullSpecies(baseSpecies) {
+function mergeFungiHKDFullSpecies(baseSpecies, rawText) {
   const merged = [...baseSpecies];
   const pairKeyOf = (sciName = "", jpName = "") => `${normalizeSearchText(sciName)}::${normalizeSearchText(jpName)}`;
   const seenPairs = new Set(baseSpecies.map((taxon) => pairKeyOf(taxon.name || "", taxon.japaneseName || taxon.preferred_common_name || "")));
   const additions = [];
 
-  for (const row of parseFungiHKDFullSpecies()) {
+  for (const row of parseFungiHKDFullSpecies(rawText)) {
     const pairKey = pairKeyOf(row.name, row.preferred_common_name);
     if (!pairKey || seenPairs.has(pairKey)) continue;
     seenPairs.add(pairKey);
@@ -673,17 +686,25 @@ function mergeFungiHKDFullSpecies(baseSpecies) {
 }
 
 function updateRestoreSpeciesListButton() {
-  if (!dom.restoreSpeciesListBtn) return;
-  dom.restoreSpeciesListBtn.classList.toggle("hidden", !state.fungiHKDFullActive);
+  if (dom.restoreSpeciesListBtn) {
+    dom.restoreSpeciesListBtn.classList.toggle("hidden", !state.fungiHKDFullActive);
+  }
+  if (dom.jpModeBtn) {
+    dom.jpModeBtn.classList.toggle("hidden", state.fungiHKDFullActive);
+  }
+  if (dom.scientificModeBtn) {
+    dom.scientificModeBtn.classList.toggle("hidden", state.fungiHKDFullActive);
+  }
 }
 
-function applyFungiHKDFullMode() {
+async function applyFungiHKDFullMode() {
   if (!state.fungiHKDFullActive) {
     state.originalAllSpecies = [...state.allSpecies];
   }
 
   const base = state.originalAllSpecies.length > 0 ? state.originalAllSpecies : state.allSpecies;
-  const { merged, addedCount } = mergeFungiHKDFullSpecies(base);
+  const rawText = await loadFungiHKDFullRawList();
+  const { merged, addedCount } = mergeFungiHKDFullSpecies(base, rawText);
 
   state.fungiHKDFullActive = true;
   state.allSpecies = merged;
@@ -797,7 +818,7 @@ async function performSpeciesSearch(rawQuery) {
 
   const q = normalizeSearchText(query);
   if (q === FUNGIHKD_FULL_TRIGGER) {
-    applyFungiHKDFullMode();
+    await applyFungiHKDFullMode();
     return;
   }
   const findMatch = (predicate) => state.species.find((taxon) => {
@@ -824,8 +845,10 @@ function renderSpeciesList() {
   if (!dom.speciesList || !dom.listTitle) return;
   dom.speciesList.innerHTML = "";
 
-  const inJpMode = state.currentMode === "jp";
-  dom.listTitle.textContent = inJpMode ? "和名(五十音)" : "学名(A~Z)";
+  const inSpecialMode = state.fungiHKDFullActive;
+  const inJpMode = inSpecialMode ? false : state.currentMode === "jp";
+  const listModeKey = inJpMode ? "jp" : "scientific";
+  dom.listTitle.textContent = inJpMode ? "和名(五十音)" : (inSpecialMode ? "学名(属名→種小名)" : "学名(A~Z)");
   updateSpeciesCount();
 
   const sorted = [...state.species].sort((a, b) => {
@@ -835,9 +858,18 @@ function renderSpeciesList() {
       return aJp.localeCompare(bJp, "ja");
     }
 
-    const aSci = (a.name || "").toLocaleLowerCase("en");
-    const bSci = (b.name || "").toLocaleLowerCase("en");
-    return aSci.localeCompare(bSci, "en");
+    const aSci = (a.name || "").trim();
+    const bSci = (b.name || "").trim();
+    const [aGenus = "", ...aRestParts] = aSci.split(/\s+/);
+    const [bGenus = "", ...bRestParts] = bSci.split(/\s+/);
+    const aRest = aRestParts.join(" ");
+    const bRest = bRestParts.join(" ");
+
+    const genusCmp = aGenus.localeCompare(bGenus, "ja");
+    if (genusCmp !== 0) return genusCmp;
+    const epithetCmp = aRest.localeCompare(bRest, "ja");
+    if (epithetCmp !== 0) return epithetCmp;
+    return aSci.localeCompare(bSci, "ja");
   });
 
   let lastGroup = null;
@@ -853,7 +885,7 @@ function renderSpeciesList() {
 
   renderJumpNav(inJpMode);
   requestAnimationFrame(() => {
-    dom.speciesList.scrollTop = state.listScrollByMode[state.currentMode] || 0;
+    dom.speciesList.scrollTop = state.listScrollByMode[listModeKey] || 0;
   });
 }
 
@@ -919,7 +951,7 @@ function createListButton(taxon) {
   button.className = "list-item";
   button.type = "button";
 
-  const inJpMode = state.currentMode === "jp";
+  const inJpMode = state.fungiHKDFullActive ? false : state.currentMode === "jp";
   const primaryRaw = inJpMode ? taxon.japaneseName : taxon.name;
   const secondaryRaw = inJpMode ? taxon.name : taxon.japaneseName;
   const primary = (primaryRaw || "-").trim() || "-";
