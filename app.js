@@ -645,11 +645,24 @@ function parseFungiHKDFullSpecies(rawText) {
     if (candidate.startsWith("#")) {
       candidate = candidate.replace(/^#+\s*/, "").trim();
       if (!candidate || !/^[A-Za-z]/.test(candidate)) continue;
+      const hasExplicitSeparator = candidate.includes("	") || /\s{2,}/.test(candidate);
+      const hasJapanese = /[぀-ヿ㐀-鿿]/.test(candidate);
+      if (!hasExplicitSeparator && !hasJapanese) continue;
     }
 
-    const pair = candidate.includes("	")
+    let pair = candidate.includes("	")
       ? candidate.split(/	+/)
       : candidate.split(/\s{2,}/);
+
+    if (pair.length < 2 && /[぀-ヿ㐀-鿿]/.test(candidate)) {
+      const jpIndex = candidate.search(/[぀-ヿ㐀-鿿]/);
+      if (jpIndex > 0) {
+        const scientific = candidate.slice(0, jpIndex).trim();
+        const japanese = candidate.slice(jpIndex).trim();
+        if (scientific) pair = [scientific, japanese];
+      }
+    }
+
     if (pair.length < 1) continue;
 
     const name = (pair[0] || "").trim().replace(/^"|"$/g, "");
