@@ -276,6 +276,10 @@ body {
   margin-top: 2px;
 }
 
+.restore-species-button {
+  margin-left: 10px;
+}
+
 .second-row {
   margin-bottom: 14px;
 }
@@ -800,6 +804,10 @@ body {
   .toggle-button {
     padding: 0.18rem 0.3rem;
     font-size: 0.58rem;
+  }
+
+  .restore-species-button {
+    margin-left: 8px;
   }
 
   .quality-label {

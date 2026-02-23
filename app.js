@@ -223,6 +223,8 @@ const state = {
   recentSlideshowTimer: null,
   currentObservations: [],
   mapResearchOnly: false,
+  fungiHKDFullActive: false,
+  originalAllSpecies: [],
 };
 
 const dom = {
@@ -251,6 +253,7 @@ const dom = {
   northernTerritoriesOutline: document.getElementById("northernTerritoriesOutline"),
   jpModeBtn: document.getElementById("jpSortBtn"),
   scientificModeBtn: document.getElementById("scientificSortBtn"),
+  restoreSpeciesListBtn: document.getElementById("restoreSpeciesListBtn"),
   researchOnlyToggle: document.getElementById("researchOnlyToggle"),
   speciesSearchInput: document.getElementById("speciesSearchInput"),
   speciesSearchBtn: document.getElementById("speciesSearchBtn"),
@@ -374,6 +377,7 @@ function normalizeSpeciesArray(arr) {
       ...taxon,
       japaneseName: japaneseNameOrFallback(taxon.preferred_common_name),
       count: taxon.count || 0,
+      isOriginalSpecies: taxon.isOriginalSpecies !== false,
     }));
 }
 
@@ -429,6 +433,7 @@ async function saveSpeciesToIndexedDB(species) {
           count: row.count || 0,
           default_photo: row.default_photo || "",
           wikipedia_url: row.wikipedia_url || "",
+          isOriginalSpecies: row.isOriginalSpecies !== false,
         });
       }
       tx.oncomplete = () => resolve();
@@ -466,6 +471,11 @@ function wireEvents() {
     });
   }
 
+  if (dom.restoreSpeciesListBtn) {
+    dom.restoreSpeciesListBtn.addEventListener("click", () => {
+      restoreOriginalSpeciesList();
+    });
+  }
 
   if (dom.researchOnlyToggle) {
     dom.researchOnlyToggle.addEventListener("click", async () => {
@@ -578,6 +588,7 @@ function updateToggleState() {
   dom.jpModeBtn?.classList.toggle("active", state.currentMode === "jp");
   dom.scientificModeBtn?.classList.toggle("active", state.currentMode === "scientific");
   updateResearchToggleState();
+  updateRestoreSpeciesListButton();
   updateMapFilterButtons();
 }
 
@@ -645,6 +656,7 @@ function mergeFungiHKDFullSpecies(baseSpecies) {
       name: row.name,
       preferred_common_name: row.preferred_common_name,
       count: 0,
+      isOriginalSpecies: false,
     });
   }
 
@@ -654,13 +666,41 @@ function mergeFungiHKDFullSpecies(baseSpecies) {
   };
 }
 
+function updateRestoreSpeciesListButton() {
+  if (!dom.restoreSpeciesListBtn) return;
+  dom.restoreSpeciesListBtn.classList.toggle("hidden", !state.fungiHKDFullActive);
+}
+
 function applyFungiHKDFullMode() {
-  const { merged, addedCount } = mergeFungiHKDFullSpecies(state.allSpecies);
+  if (!state.fungiHKDFullActive) {
+    state.originalAllSpecies = [...state.allSpecies];
+  }
+
+  const base = state.originalAllSpecies.length > 0 ? state.originalAllSpecies : state.allSpecies;
+  const { merged, addedCount } = mergeFungiHKDFullSpecies(base);
+
+  state.fungiHKDFullActive = true;
   state.allSpecies = merged;
+  state.filterResearchOnly = false;
   applySpeciesFilter();
+  updateResearchToggleState();
+  updateRestoreSpeciesListButton();
   renderSpeciesList();
   hideSearchSuggestions();
   setStatus(`FungiHKDfullを適用: ${addedCount}件を追加（重複除外）しました。`);
+}
+
+function restoreOriginalSpeciesList() {
+  if (!state.fungiHKDFullActive) return;
+  state.fungiHKDFullActive = false;
+  if (state.originalAllSpecies.length > 0) {
+    state.allSpecies = [...state.originalAllSpecies];
+  }
+  state.originalAllSpecies = [];
+  applySpeciesFilter();
+  updateRestoreSpeciesListButton();
+  renderSpeciesList();
+  setStatus(`通常の種一覧に戻しました（${state.species.length}種）。`);
 }
 
 function hideSearchSuggestions() {
@@ -881,7 +921,7 @@ function createListButton(taxon) {
 
   const primaryEl = document.createElement("span");
   primaryEl.className = `primary-name${inJpMode ? "" : " scientific-text"}`;
-  primaryEl.textContent = primary;
+  primaryEl.textContent = taxon.isOriginalSpecies ? `★ ${primary}` : primary;
 
   const sub = document.createElement("small");
   sub.className = inJpMode ? "scientific-text" : "";
