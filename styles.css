@@ -920,6 +920,8 @@ body {
 }
 
 
+html,
+body,
 .species-list,
 .content,
 .species-search-dropdown {
@@ -927,6 +929,8 @@ body {
   scrollbar-color: #39b268 #0b1a12;
 }
 
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
 .species-list::-webkit-scrollbar,
 .content::-webkit-scrollbar,
 .species-search-dropdown::-webkit-scrollbar {
@@ -934,6 +938,8 @@ body {
   height: 12px;
 }
 
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
 .species-list::-webkit-scrollbar-track,
 .content::-webkit-scrollbar-track,
 .species-search-dropdown::-webkit-scrollbar-track {
@@ -941,6 +947,8 @@ body {
   border: 1px solid #1f7a3f;
 }
 
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
 .species-list::-webkit-scrollbar-thumb,
 .content::-webkit-scrollbar-thumb,
 .species-search-dropdown::-webkit-scrollbar-thumb {
@@ -948,6 +956,8 @@ body {
   border: 2px solid #0b1a12;
 }
 
+html::-webkit-scrollbar-button,
+body::-webkit-scrollbar-button,
 .species-list::-webkit-scrollbar-button,
 .content::-webkit-scrollbar-button,
 .species-search-dropdown::-webkit-scrollbar-button {
