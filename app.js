@@ -628,12 +628,17 @@ function parseFungiHKDFullSpecies() {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    const pair = trimmed.split(/\t+/);
-    if (pair.length < 2) continue;
+    const pair = trimmed.includes("\t")
+      ? trimmed.split(/\t+/)
+      : trimmed.split(/\s{2,}/);
+    if (pair.length < 1) continue;
 
     const name = (pair[0] || "").trim();
-    const preferredCommonName = (pair[1] || "").trim();
-    if (!name || !preferredCommonName) continue;
+    let preferredCommonName = (pair[1] || "").trim();
+    if (!preferredCommonName || preferredCommonName === "（空欄）" || preferredCommonName === "(空欄)") {
+      preferredCommonName = "和名なし";
+    }
+    if (!name) continue;
 
     rows.push({ name, preferred_common_name: preferredCommonName });
   }
@@ -642,13 +647,14 @@ function parseFungiHKDFullSpecies() {
 
 function mergeFungiHKDFullSpecies(baseSpecies) {
   const merged = [...baseSpecies];
-  const seen = new Set(baseSpecies.map((taxon) => normalizeSearchText(taxon.name || "")));
+  const pairKeyOf = (sciName = "", jpName = "") => `${normalizeSearchText(sciName)}::${normalizeSearchText(jpName)}`;
+  const seenPairs = new Set(baseSpecies.map((taxon) => pairKeyOf(taxon.name || "", taxon.japaneseName || taxon.preferred_common_name || "")));
   const additions = [];
 
   for (const row of parseFungiHKDFullSpecies()) {
-    const key = normalizeSearchText(row.name);
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
+    const pairKey = pairKeyOf(row.name, row.preferred_common_name);
+    if (!pairKey || seenPairs.has(pairKey)) continue;
+    seenPairs.add(pairKey);
 
     const id = 900000000 + additions.length;
     additions.push({
