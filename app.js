@@ -1147,7 +1147,7 @@ function renderPhotos(taxon, observations) {
     .filter((item) => item.imageUrl && item.obsUrl);
 
   if (photoItems.length === 0) {
-    const noObservationInSpecialList = state.fungiHKDFullActive && taxon.isOriginalSpecies === false && observations.length === 0;
+    const noObservationInSpecialList = state.fungiHKDFullActive && observations.length === 0;
 
     const fallbackImage = document.createElement("img");
     fallbackImage.src = noObservationInSpecialList ? "assets/img/no-observation.svg" : "assets/img/Allrightsfungi.png";
