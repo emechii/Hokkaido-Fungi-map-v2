@@ -15,6 +15,7 @@ const RECENT_OBS_FETCH = 30;
 const RECENT_SLIDE_INTERVAL_MS = 4000;
 
 const FUNGIHKD_FULL_TRIGGER = "fungihkdfull";
+const FUNGIHKD_FULL_TSV_PATH = "./data/fungihkdfull.tsv";
 const FUNGIHKD_FULL_RAW_LIST = `
 Acanthofungus ahmadii	タチカタウロコタケ
 Agaricus abruptibulbus	ウスキモリノカサ
@@ -621,12 +622,24 @@ function normalizeSearchText(text) {
   return toHiragana((text || "").trim()).toLocaleLowerCase("ja-JP");
 }
 
-function parseFungiHKDFullSpecies() {
+async function loadFungiHKDFullRawList() {
+  try {
+    const response = await fetch(`${FUNGIHKD_FULL_TSV_PATH}?t=${Date.now()}`);
+    if (!response.ok) throw new Error(`status ${response.status}`);
+    const text = await response.text();
+    if (text.trim()) return text;
+  } catch (error) {
+    console.warn("FungiHKDfull TSV の読み込みに失敗。埋め込みデータへフォールバックします", error);
+  }
+  return FUNGIHKD_FULL_RAW_LIST;
+}
+
+function parseFungiHKDFullSpecies(rawText) {
   const rows = [];
-  const lines = FUNGIHKD_FULL_RAW_LIST.split("\n");
+  const lines = String(rawText || "").split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed) continue;
+    if (!trimmed || trimmed.startsWith("#")) continue;
 
     const pair = trimmed.includes("\t")
       ? trimmed.split(/\t+/)
@@ -645,13 +658,13 @@ function parseFungiHKDFullSpecies() {
   return rows;
 }
 
-function mergeFungiHKDFullSpecies(baseSpecies) {
+function mergeFungiHKDFullSpecies(baseSpecies, rawText) {
   const merged = [...baseSpecies];
   const pairKeyOf = (sciName = "", jpName = "") => `${normalizeSearchText(sciName)}::${normalizeSearchText(jpName)}`;
   const seenPairs = new Set(baseSpecies.map((taxon) => pairKeyOf(taxon.name || "", taxon.japaneseName || taxon.preferred_common_name || "")));
   const additions = [];
 
-  for (const row of parseFungiHKDFullSpecies()) {
+  for (const row of parseFungiHKDFullSpecies(rawText)) {
     const pairKey = pairKeyOf(row.name, row.preferred_common_name);
     if (!pairKey || seenPairs.has(pairKey)) continue;
     seenPairs.add(pairKey);
@@ -684,13 +697,14 @@ function updateRestoreSpeciesListButton() {
   }
 }
 
-function applyFungiHKDFullMode() {
+async function applyFungiHKDFullMode() {
   if (!state.fungiHKDFullActive) {
     state.originalAllSpecies = [...state.allSpecies];
   }
 
   const base = state.originalAllSpecies.length > 0 ? state.originalAllSpecies : state.allSpecies;
-  const { merged, addedCount } = mergeFungiHKDFullSpecies(base);
+  const rawText = await loadFungiHKDFullRawList();
+  const { merged, addedCount } = mergeFungiHKDFullSpecies(base, rawText);
 
   state.fungiHKDFullActive = true;
   state.allSpecies = merged;
@@ -804,7 +818,7 @@ async function performSpeciesSearch(rawQuery) {
 
   const q = normalizeSearchText(query);
   if (q === FUNGIHKD_FULL_TRIGGER) {
-    applyFungiHKDFullMode();
+    await applyFungiHKDFullMode();
     return;
   }
   const findMatch = (predicate) => state.species.find((taxon) => {
