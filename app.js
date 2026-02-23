@@ -639,15 +639,21 @@ function parseFungiHKDFullSpecies(rawText) {
   const lines = String(rawText || "").split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
+    if (!trimmed) continue;
 
-    const pair = trimmed.includes("\t")
-      ? trimmed.split(/\t+/)
-      : trimmed.split(/\s{2,}/);
+    let candidate = trimmed;
+    if (candidate.startsWith("#")) {
+      candidate = candidate.replace(/^#+\s*/, "").trim();
+      if (!candidate || !/^[A-Za-z]/.test(candidate)) continue;
+    }
+
+    const pair = candidate.includes("	")
+      ? candidate.split(/	+/)
+      : candidate.split(/\s{2,}/);
     if (pair.length < 1) continue;
 
-    const name = (pair[0] || "").trim();
-    let preferredCommonName = (pair[1] || "").trim();
+    const name = (pair[0] || "").trim().replace(/^"|"$/g, "");
+    let preferredCommonName = (pair[1] || "").trim().replace(/^"|"$/g, "");
     if (!preferredCommonName || preferredCommonName === "（空欄）" || preferredCommonName === "(空欄)") {
       preferredCommonName = "和名なし";
     }
@@ -657,6 +663,7 @@ function parseFungiHKDFullSpecies(rawText) {
   }
   return rows;
 }
+
 
 function mergeFungiHKDFullSpecies(baseSpecies, rawText) {
   const merged = [...baseSpecies];
