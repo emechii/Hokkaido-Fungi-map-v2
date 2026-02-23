@@ -447,16 +447,20 @@ async function saveSpeciesToIndexedDB(species) {
   }
 }
 
+function getEffectiveListModeKey() {
+  return state.fungiHKDFullActive ? "scientific" : state.currentMode;
+}
+
 function wireEvents() {
   if (dom.speciesList) {
     dom.speciesList.addEventListener("scroll", () => {
-      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+      state.listScrollByMode[getEffectiveListModeKey()] = dom.speciesList.scrollTop;
     });
   }
 
   if (dom.jpModeBtn && dom.speciesList) {
     dom.jpModeBtn.addEventListener("click", () => {
-      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+      state.listScrollByMode[getEffectiveListModeKey()] = dom.speciesList.scrollTop;
       state.currentMode = "jp";
       updateToggleState();
       renderSpeciesList();
@@ -465,7 +469,7 @@ function wireEvents() {
 
   if (dom.scientificModeBtn && dom.speciesList) {
     dom.scientificModeBtn.addEventListener("click", () => {
-      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+      state.listScrollByMode[getEffectiveListModeKey()] = dom.speciesList.scrollTop;
       state.currentMode = "scientific";
       updateToggleState();
       renderSpeciesList();
@@ -645,27 +649,45 @@ function parseFungiHKDFullSpecies(rawText) {
     if (candidate.startsWith("#")) {
       candidate = candidate.replace(/^#+\s*/, "").trim();
       if (!candidate || !/^[A-Za-z]/.test(candidate)) continue;
-      const hasExplicitSeparator = candidate.includes("	") || /\s{2,}/.test(candidate);
-      const hasJapanese = /[぀-ヿ㐀-鿿]/.test(candidate);
-      if (!hasExplicitSeparator && !hasJapanese) continue;
     }
 
     let pair = candidate.includes("	")
       ? candidate.split(/	+/)
       : candidate.split(/\s{2,}/);
 
-    if (pair.length < 2 && /[぀-ヿ㐀-鿿]/.test(candidate)) {
-      const jpIndex = candidate.search(/[぀-ヿ㐀-鿿]/);
-      if (jpIndex > 0) {
-        const scientific = candidate.slice(0, jpIndex).trim();
-        const japanese = candidate.slice(jpIndex).trim();
-        if (scientific) pair = [scientific, japanese];
+    if (pair.length < 2) {
+      if (/[぀-ヿ㐀-鿿]/.test(candidate)) {
+        const jpIndex = candidate.search(/[぀-ヿ㐀-鿿]/);
+        if (jpIndex > 0) {
+          const scientific = candidate.slice(0, jpIndex).trim();
+          const japanese = candidate.slice(jpIndex).trim();
+          if (scientific) pair = [scientific, japanese];
+        }
+      } else {
+        const tokens = candidate.split(/\s+/).filter(Boolean);
+        const scientificTokens = [];
+        for (const token of tokens) {
+          if (/^[A-Za-z][A-Za-z0-9_.()×+-]*$/.test(token)) {
+            scientificTokens.push(token);
+            continue;
+          }
+          break;
+        }
+        if (scientificTokens.length > 0 && scientificTokens.length < tokens.length) {
+          pair = [
+            scientificTokens.join(" "),
+            tokens.slice(scientificTokens.length).join(" "),
+          ];
+        }
       }
     }
 
     if (pair.length < 1) continue;
 
     const name = (pair[0] || "").trim().replace(/^"|"$/g, "");
+    const genusToken = name.split(/\s+/)[0] || "";
+    if (!/^[A-Z][A-Za-z-]*$/.test(genusToken)) continue;
+
     let preferredCommonName = (pair[1] || "").trim().replace(/^"|"$/g, "");
     if (!preferredCommonName || preferredCommonName === "（空欄）" || preferredCommonName === "(空欄)") {
       preferredCommonName = "和名なし";
@@ -867,7 +889,7 @@ function renderSpeciesList() {
 
   const inSpecialMode = state.fungiHKDFullActive;
   const inJpMode = inSpecialMode ? false : state.currentMode === "jp";
-  const listModeKey = inJpMode ? "jp" : "scientific";
+  const listModeKey = getEffectiveListModeKey();
   dom.listTitle.textContent = inJpMode ? "和名(五十音)" : (inSpecialMode ? "学名(属名→種小名)" : "学名(A~Z)");
   updateSpeciesCount();
 
