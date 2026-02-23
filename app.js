@@ -14,6 +14,146 @@ const RECENT_OBS_SLIDES = 5;
 const RECENT_OBS_FETCH = 30;
 const RECENT_SLIDE_INTERVAL_MS = 4000;
 
+const FUNGIHKD_FULL_TRIGGER = "fungihkdfull";
+const FUNGIHKD_FULL_TSV_PATH = "./data/fungihkdfull.tsv";
+const FUNGIHKD_FULL_RAW_LIST = `
+Acanthofungus ahmadii	タチカタウロコタケ
+Agaricus abruptibulbus	ウスキモリノカサ
+Agaricus arvensis	シロオオハラタケ
+Agaricus campestris	ハラタケ
+Agaricus essettei	和名なし
+Agaricus jezoënsis	キハラタケ
+Agaricus moelleri	ナカグロモリノカサ
+Agaricus silvaticus	モリハラタケ
+Agaricus subperonatus	和名なし
+Agrocybe acericola	クチキフミヅキタケ
+Agrocybe erebia	ツチナメコ
+Agrocybe farinacea	ツバナシフミヅキタケ
+Agrocybe firma	ツバナシヤナギマツタケ
+Agrocybe pediades	ハタケキノコ
+Agrocybe praecox	フミヅキタケ
+Akanthomyces tuberclatus	ガヤドリナガミノツブタケ
+Akanthomyces sp.	ガヤドリナガミノツブタケ近縁種
+Albatrellus cristatus	ザボンタケ
+Albatrellus confluens	ニンギョウタケ
+Albatrellus ovinus	ニンギョウタケモドキ
+Albatrellus pes-caprae	センニンタケ
+Aleuria aurantia	ヒイロチャワンタケ
+Aleuria rhenana	キンチャワンタケ
+Alpova diplophloeus	和名なし
+Amanita avellaneosquamosa	アクイロウロコツルタケ
+Amanita caesareoides	タマゴタケ
+Amanita ceciliae	テングツルタケ
+Amanita cheelii	オオツルタケ
+Amanita citrina	コタマゴテングタケ
+Amanita citrina var. alba	シロコタマゴテングタケ
+Amanita clarisquamosa	シロウロコツルタケ
+Amanita crocea	コガネツルタケ
+Amanita farinosa	ヒメコナカブリツルタケ
+Amanita flavipes	コガネテングタケ
+Amanita fulva	カバイロツルタケ
+Amanita griseoturcosa	アオミドリタマゴテングタケ
+Amanita ibotengutake	イボテングタケ
+Amanita imazekii	ミヤマタマゴタケ
+Amanita longistriata	タマゴテングタケモドキ
+Amanita muscaria	ベニテングタケ
+Amanita oberwinkleriana	ニオイドクツルタケ
+Amanita onusta	和名なし
+Amanita orientifulva	和名なし
+Amanita orientigemmata	ウスキテングタケ
+Amanita pallidorosea	アケボノドクツルタケ
+Amanita pantherina	テングタケ
+Amanita porphyria	コテングタケ
+Amanita pseudoporphyria	コテングタケモドキ
+Amanita regalis	オウテングタケ
+Amanita rhodophylla	タマゴテングタケモドキ
+Amanita rubescens	ガンタケ
+Amanita rubrovolvata	ヒメベニテングタケ
+Amanita satotamagotake	サトタマゴタケ
+Amanita sepiacea	テングタケモドキ
+Amanita sinensis	ハイカグラテングタケ
+Amanita sphaerobulbosa	タマシロオニタケ
+Amanita spissacea	ヘビキノコモドキ
+Amanita subjunquillea	タマゴタケモドキ
+Amanita vaginata	ツルタケ
+Amanita virosa	ドクツルタケ
+Amanita volvata	フクロツルタケ
+Amanita sp.	ヒメテングタケ(仮)
+Ampulloclitocybe clavipes	ホテイシメジ
+Apioperdon pyriforme	タヌキノチャブクロ
+Armillaria jezoensis	コバリナラタケ
+Armillaria mellea	ナラタケ
+Astraeus hygrometricus	ツチグリ
+Atheniella adonis	コウバイタケ
+Aureoboletus mirabilis	オオキノボリイグチ
+Auricularia americana	アメリカキクラゲ
+Auricularia cornea	ナンカイキクラゲ
+Auricularia mesenterica	ヒダキクラゲ
+Auriscalpium vulgare	マツカサタケ
+Baorangia pseudocalopus	ニセアシベニイグチ
+Bjerkandera adusta	ヤケイロタケ
+Boletus edulis	ヤマドリタケ
+Caloboletus calopus	アシベニイグチ
+Cantharellus cibarius	アンズタケ
+Chondrostereum purpureum	ムラサキウロコタケ
+Clavaria zollingeri	ムラサキホウキタケ
+Clitocybe gibba	カヤタケ
+Collybia cirrata	ホコリヤグラタケ
+Coprinellus micaceus	キララタケ
+Coprinopsis atramentaria	ヒトヨタケ
+Cordyceps militaris	サナギタケ
+Cortinarius violaceus	ムラサキフウセンタケ
+Craterellus cornucopioides	クロラッパタケ
+Cuphophyllus pratensis	ハダイロガサ
+Cyanoboletus pulverulentus	イロガワリ
+Dacrymyces stillatus	ヒメアカキクラゲ
+Daedalea dickinsii	ホウロクタケ
+Entoloma rhodopolium	クサウラベニタケ
+Exidia glandulosa	ヒメキクラゲ
+Flammulina velutipes	エノキタケ
+Fomitopsis pinicola	ツガサルノコシカケ
+Ganoderma sichuanense	マンネンタケ
+Gomphus clavatus	ラッパタケ
+Grifola frondosa	マイタケ
+Gyromitra esculenta	シャグマアミガサタケ
+Hericium erinaceus	ヤマブシタケ
+Hydnum repandum	カノシタ
+Hypholoma lateritium	クリタケ
+Hypsizygus marmoreus	ブナシメジ
+Imleria badia	ニセイロガワリ
+Inonotus obliquus	カバノアナタケ
+Laccaria amethystina	ウラムラサキ
+Lactarius akahatsu	アカハツ
+Lentinula edodes	シイタケ
+Lepiota cristata	キツネノカラカサ
+Lycoperdon perlatum	ホコリタケ
+Macrolepiota procera	カラカサタケ
+Morchella esculenta	アミガサタケ
+Mutinus caninus	キツネノロウソク
+Mycena pura	サクラタケ
+Omphalotus japonicus	ツキヨタケ
+Panellus serotinus	ムキタケ
+Pholiota microspora	ナメコ
+Pleurotus ostreatus	ヒラタケ
+Pluteus cervinus	ウラベニガサ
+Polyozellus multiplex	カラスタケ
+Ramaria botrytis	ホウキタケ
+Russula virescens	アイタケ
+Sarcodon aspratus	コウタケ
+Schizophyllum commune	スエヒロタケ
+Sparassis crispa	ハナビラタケ
+Strobilomyces strobilaceus	オニイグチ
+Suillus luteus	ヌメリイグチ
+Trametes versicolor	カワラタケ
+Trichoderma cornu-damae	カエンタケ
+Tricholoma matsutake	マツタケ
+Tuber himalayense	アジアクロセイヨウショウロ
+Volvariella bombycina	キヌオオフクロタケ
+Xerocomus zelleri	ビロードコウジタケ
+Xylaria polymorpha	マメザヤタケ
+`;
+
+
 const DEFAULT_BOUNDS = { minLon: 139.2, maxLon: 146.4, minLat: 41.2, maxLat: 45.9 };
 const MAP_CANVAS = { x: 20, y: 20, width: 560, height: 320 };
 
@@ -84,6 +224,8 @@ const state = {
   recentSlideshowTimer: null,
   currentObservations: [],
   mapResearchOnly: false,
+  fungiHKDFullActive: false,
+  originalAllSpecies: [],
 };
 
 const dom = {
@@ -112,6 +254,7 @@ const dom = {
   northernTerritoriesOutline: document.getElementById("northernTerritoriesOutline"),
   jpModeBtn: document.getElementById("jpSortBtn"),
   scientificModeBtn: document.getElementById("scientificSortBtn"),
+  restoreSpeciesListBtn: document.getElementById("restoreSpeciesListBtn"),
   researchOnlyToggle: document.getElementById("researchOnlyToggle"),
   speciesSearchInput: document.getElementById("speciesSearchInput"),
   speciesSearchBtn: document.getElementById("speciesSearchBtn"),
@@ -235,6 +378,7 @@ function normalizeSpeciesArray(arr) {
       ...taxon,
       japaneseName: japaneseNameOrFallback(taxon.preferred_common_name),
       count: taxon.count || 0,
+      isOriginalSpecies: taxon.isOriginalSpecies !== false,
     }));
 }
 
@@ -290,6 +434,7 @@ async function saveSpeciesToIndexedDB(species) {
           count: row.count || 0,
           default_photo: row.default_photo || "",
           wikipedia_url: row.wikipedia_url || "",
+          isOriginalSpecies: row.isOriginalSpecies !== false,
         });
       }
       tx.oncomplete = () => resolve();
@@ -302,16 +447,20 @@ async function saveSpeciesToIndexedDB(species) {
   }
 }
 
+function getEffectiveListModeKey() {
+  return state.fungiHKDFullActive ? "scientific" : state.currentMode;
+}
+
 function wireEvents() {
   if (dom.speciesList) {
     dom.speciesList.addEventListener("scroll", () => {
-      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+      state.listScrollByMode[getEffectiveListModeKey()] = dom.speciesList.scrollTop;
     });
   }
 
   if (dom.jpModeBtn && dom.speciesList) {
     dom.jpModeBtn.addEventListener("click", () => {
-      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+      state.listScrollByMode[getEffectiveListModeKey()] = dom.speciesList.scrollTop;
       state.currentMode = "jp";
       updateToggleState();
       renderSpeciesList();
@@ -320,13 +469,18 @@ function wireEvents() {
 
   if (dom.scientificModeBtn && dom.speciesList) {
     dom.scientificModeBtn.addEventListener("click", () => {
-      state.listScrollByMode[state.currentMode] = dom.speciesList.scrollTop;
+      state.listScrollByMode[getEffectiveListModeKey()] = dom.speciesList.scrollTop;
       state.currentMode = "scientific";
       updateToggleState();
       renderSpeciesList();
     });
   }
 
+  if (dom.restoreSpeciesListBtn) {
+    dom.restoreSpeciesListBtn.addEventListener("click", () => {
+      restoreOriginalSpeciesList();
+    });
+  }
 
   if (dom.researchOnlyToggle) {
     dom.researchOnlyToggle.addEventListener("click", async () => {
@@ -439,6 +593,7 @@ function updateToggleState() {
   dom.jpModeBtn?.classList.toggle("active", state.currentMode === "jp");
   dom.scientificModeBtn?.classList.toggle("active", state.currentMode === "scientific");
   updateResearchToggleState();
+  updateRestoreSpeciesListButton();
   updateMapFilterButtons();
 }
 
@@ -469,6 +624,152 @@ function updateMapFilterButtons() {
 
 function normalizeSearchText(text) {
   return toHiragana((text || "").trim()).toLocaleLowerCase("ja-JP");
+}
+
+async function loadFungiHKDFullRawList() {
+  try {
+    const response = await fetch(`${FUNGIHKD_FULL_TSV_PATH}?t=${Date.now()}`);
+    if (!response.ok) throw new Error(`status ${response.status}`);
+    const text = await response.text();
+    if (text.trim()) return text;
+  } catch (error) {
+    console.warn("FungiHKDfull TSV の読み込みに失敗。埋め込みデータへフォールバックします", error);
+  }
+  return FUNGIHKD_FULL_RAW_LIST;
+}
+
+function parseFungiHKDFullSpecies(rawText) {
+  const rows = [];
+  const lines = String(rawText || "").split("\n");
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    let candidate = trimmed;
+    if (candidate.startsWith("#")) {
+      candidate = candidate.replace(/^#+\s*/, "").trim();
+      if (!candidate || !/^[A-Za-z]/.test(candidate)) continue;
+    }
+
+    let pair = candidate.includes("	")
+      ? candidate.split(/	+/)
+      : candidate.split(/\s{2,}/);
+
+    if (pair.length < 2) {
+      if (/[぀-ヿ㐀-鿿]/.test(candidate)) {
+        const jpIndex = candidate.search(/[぀-ヿ㐀-鿿]/);
+        if (jpIndex > 0) {
+          const scientific = candidate.slice(0, jpIndex).trim();
+          const japanese = candidate.slice(jpIndex).trim();
+          if (scientific) pair = [scientific, japanese];
+        }
+      } else {
+        const tokens = candidate.split(/\s+/).filter(Boolean);
+        const scientificTokens = [];
+        for (const token of tokens) {
+          if (/^[A-Za-z][A-Za-z0-9_.()×+-]*$/.test(token)) {
+            scientificTokens.push(token);
+            continue;
+          }
+          break;
+        }
+        if (scientificTokens.length > 0 && scientificTokens.length < tokens.length) {
+          pair = [
+            scientificTokens.join(" "),
+            tokens.slice(scientificTokens.length).join(" "),
+          ];
+        }
+      }
+    }
+
+    if (pair.length < 1) continue;
+
+    const name = (pair[0] || "").trim().replace(/^"|"$/g, "");
+    const genusToken = name.split(/\s+/)[0] || "";
+    if (!/^[A-Z][A-Za-z-]*$/.test(genusToken)) continue;
+
+    let preferredCommonName = (pair[1] || "").trim().replace(/^"|"$/g, "");
+    if (!preferredCommonName || preferredCommonName === "（空欄）" || preferredCommonName === "(空欄)") {
+      preferredCommonName = "和名なし";
+    }
+    if (!name) continue;
+
+    rows.push({ name, preferred_common_name: preferredCommonName });
+  }
+  return rows;
+}
+
+
+function mergeFungiHKDFullSpecies(baseSpecies, rawText) {
+  const merged = [...baseSpecies];
+  const pairKeyOf = (sciName = "", jpName = "") => `${normalizeSearchText(sciName)}::${normalizeSearchText(jpName)}`;
+  const seenPairs = new Set(baseSpecies.map((taxon) => pairKeyOf(taxon.name || "", taxon.japaneseName || taxon.preferred_common_name || "")));
+  const additions = [];
+
+  for (const row of parseFungiHKDFullSpecies(rawText)) {
+    const pairKey = pairKeyOf(row.name, row.preferred_common_name);
+    if (!pairKey || seenPairs.has(pairKey)) continue;
+    seenPairs.add(pairKey);
+
+    const id = 900000000 + additions.length;
+    additions.push({
+      id,
+      name: row.name,
+      preferred_common_name: row.preferred_common_name,
+      count: 0,
+      isOriginalSpecies: false,
+    });
+  }
+
+  return {
+    merged: normalizeSpeciesArray([...merged, ...additions]),
+    addedCount: additions.length,
+  };
+}
+
+function updateRestoreSpeciesListButton() {
+  if (dom.restoreSpeciesListBtn) {
+    dom.restoreSpeciesListBtn.classList.toggle("hidden", !state.fungiHKDFullActive);
+  }
+  if (dom.jpModeBtn) {
+    dom.jpModeBtn.classList.toggle("hidden", state.fungiHKDFullActive);
+  }
+  if (dom.scientificModeBtn) {
+    dom.scientificModeBtn.classList.toggle("hidden", state.fungiHKDFullActive);
+  }
+}
+
+async function applyFungiHKDFullMode() {
+  if (!state.fungiHKDFullActive) {
+    state.originalAllSpecies = [...state.allSpecies];
+  }
+
+  const base = state.originalAllSpecies.length > 0 ? state.originalAllSpecies : state.allSpecies;
+  const rawText = await loadFungiHKDFullRawList();
+  const { merged, addedCount } = mergeFungiHKDFullSpecies(base, rawText);
+
+  state.fungiHKDFullActive = true;
+  state.allSpecies = merged;
+  state.filterResearchOnly = false;
+  applySpeciesFilter();
+  updateResearchToggleState();
+  updateRestoreSpeciesListButton();
+  renderSpeciesList();
+  hideSearchSuggestions();
+  setStatus(`FungiHKDfullを適用: ${addedCount}件を追加（重複除外）しました。`);
+}
+
+function restoreOriginalSpeciesList() {
+  if (!state.fungiHKDFullActive) return;
+  state.fungiHKDFullActive = false;
+  if (state.originalAllSpecies.length > 0) {
+    state.allSpecies = [...state.originalAllSpecies];
+  }
+  state.originalAllSpecies = [];
+  applySpeciesFilter();
+  updateRestoreSpeciesListButton();
+  renderSpeciesList();
+  setStatus(`通常の種一覧に戻しました（${state.species.length}種）。`);
 }
 
 function hideSearchSuggestions() {
@@ -558,6 +859,10 @@ async function performSpeciesSearch(rawQuery) {
   }
 
   const q = normalizeSearchText(query);
+  if (q === FUNGIHKD_FULL_TRIGGER) {
+    await applyFungiHKDFullMode();
+    return;
+  }
   const findMatch = (predicate) => state.species.find((taxon) => {
     const jp = normalizeSearchText(taxon.japaneseName || "");
     const sci = normalizeSearchText(taxon.name || "");
@@ -582,8 +887,10 @@ function renderSpeciesList() {
   if (!dom.speciesList || !dom.listTitle) return;
   dom.speciesList.innerHTML = "";
 
-  const inJpMode = state.currentMode === "jp";
-  dom.listTitle.textContent = inJpMode ? "和名(五十音)" : "学名(A~Z)";
+  const inSpecialMode = state.fungiHKDFullActive;
+  const inJpMode = inSpecialMode ? false : state.currentMode === "jp";
+  const listModeKey = getEffectiveListModeKey();
+  dom.listTitle.textContent = inJpMode ? "和名(五十音)" : (inSpecialMode ? "学名(属名→種小名)" : "学名(A~Z)");
   updateSpeciesCount();
 
   const sorted = [...state.species].sort((a, b) => {
@@ -593,9 +900,18 @@ function renderSpeciesList() {
       return aJp.localeCompare(bJp, "ja");
     }
 
-    const aSci = (a.name || "").toLocaleLowerCase("en");
-    const bSci = (b.name || "").toLocaleLowerCase("en");
-    return aSci.localeCompare(bSci, "en");
+    const aSci = (a.name || "").trim();
+    const bSci = (b.name || "").trim();
+    const [aGenus = "", ...aRestParts] = aSci.split(/\s+/);
+    const [bGenus = "", ...bRestParts] = bSci.split(/\s+/);
+    const aRest = aRestParts.join(" ");
+    const bRest = bRestParts.join(" ");
+
+    const genusCmp = aGenus.localeCompare(bGenus, "ja");
+    if (genusCmp !== 0) return genusCmp;
+    const epithetCmp = aRest.localeCompare(bRest, "ja");
+    if (epithetCmp !== 0) return epithetCmp;
+    return aSci.localeCompare(bSci, "ja");
   });
 
   let lastGroup = null;
@@ -611,7 +927,7 @@ function renderSpeciesList() {
 
   renderJumpNav(inJpMode);
   requestAnimationFrame(() => {
-    dom.speciesList.scrollTop = state.listScrollByMode[state.currentMode] || 0;
+    dom.speciesList.scrollTop = state.listScrollByMode[listModeKey] || 0;
   });
 }
 
@@ -677,7 +993,7 @@ function createListButton(taxon) {
   button.className = "list-item";
   button.type = "button";
 
-  const inJpMode = state.currentMode === "jp";
+  const inJpMode = state.fungiHKDFullActive ? false : state.currentMode === "jp";
   const primaryRaw = inJpMode ? taxon.japaneseName : taxon.name;
   const secondaryRaw = inJpMode ? taxon.name : taxon.japaneseName;
   const primary = (primaryRaw || "-").trim() || "-";
@@ -685,7 +1001,7 @@ function createListButton(taxon) {
 
   const primaryEl = document.createElement("span");
   primaryEl.className = `primary-name${inJpMode ? "" : " scientific-text"}`;
-  primaryEl.textContent = primary;
+  primaryEl.textContent = state.fungiHKDFullActive && taxon.isOriginalSpecies ? `★ ${primary}` : primary;
 
   const sub = document.createElement("small");
   sub.className = inJpMode ? "scientific-text" : "";
@@ -785,7 +1101,21 @@ function renderPhotos(taxon, observations) {
     .filter((item) => item.imageUrl && item.obsUrl);
 
   if (photoItems.length === 0) {
-    dom.photoGrid.innerHTML = "<p>写真付き観察が見つかりませんでした（ローカル表示モード）。</p>";
+    const fallbackImage = document.createElement("img");
+    fallbackImage.src = "assets/img/Allrightsfungi.png";
+    fallbackImage.alt = "All rights fungi";
+    fallbackImage.className = "photo-grid-fallback-image";
+    dom.photoGrid.appendChild(fallbackImage);
+
+    if (state.projectId) {
+      const observationsUrl = new URL("https://www.inaturalist.org/observations");
+      observationsUrl.searchParams.set("project_id", PROJECT_SLUG);
+      observationsUrl.searchParams.set("taxon_id", String(taxon.id));
+
+      dom.obsLinkBtn.href = observationsUrl.toString();
+      dom.obsLinkBtn.classList.remove("hidden");
+    }
+
     return;
   }
 
