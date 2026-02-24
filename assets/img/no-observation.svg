@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">No observation</title>
+  <desc id="desc">No iNaturalist observations available for this species.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#06110b"/>
+      <stop offset="100%" stop-color="#0a1f14"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <g fill="none" stroke="#76ffbd" stroke-opacity="0.4" stroke-width="4">
+    <circle cx="600" cy="360" r="180"/>
+    <line x1="470" y1="230" x2="730" y2="490"/>
+    <line x1="730" y1="230" x2="470" y2="490"/>
+  </g>
+  <text x="600" y="610" text-anchor="middle" fill="#b4ffd9" font-size="56" font-family="'Noto Sans JP', sans-serif">観察記録がありません</text>
+  <text x="600" y="670" text-anchor="middle" fill="#8fd8b5" font-size="34" font-family="'Noto Sans JP', sans-serif">No observation</text>
+</svg>
