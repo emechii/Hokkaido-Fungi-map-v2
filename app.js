@@ -1,6 +1,7 @@
 const API_BASE = "https://api.inaturalist.org/v1";
 const PROJECT_SLUG = "fungi-of-hokkaido";
-const NO_OBSERVATION_PNG_PATH = "assets/img/no-observation.svg";
+const NO_OBSERVATION_PNG_PATH = "assets/img/No-observation.png";
+const NO_OBSERVATION_FALLBACK_PATH = "assets/img/no-observation.svg";
 const LOCAL_SPECIES_PATH = "./local-species.json";
 const LOCAL_CACHE_KEY = "hokkaido-fungi-species-cache-v1";
 const SPECIES_DB_NAME = "hokkaido-fungi-db";
@@ -1152,6 +1153,12 @@ function renderPhotos(taxon, observations) {
 
     const fallbackImage = document.createElement("img");
     fallbackImage.src = noObservationInSpecialList ? NO_OBSERVATION_PNG_PATH : "assets/img/Allrightsfungi.png";
+    if (noObservationInSpecialList) {
+      fallbackImage.onerror = () => {
+        fallbackImage.onerror = null;
+        fallbackImage.src = NO_OBSERVATION_FALLBACK_PATH;
+      };
+    }
     fallbackImage.alt = noObservationInSpecialList ? "No observation" : "All rights fungi";
     fallbackImage.className = "photo-grid-fallback-image";
     dom.photoGrid.appendChild(fallbackImage);
