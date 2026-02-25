@@ -1033,7 +1033,7 @@ body::-webkit-scrollbar-button,
 
 .taxon-filter-promo-image {
   display: block;
-  width: 94%;
+  width: min(680px, 94%);
   margin: 0 auto;
   height: auto;
 }
@@ -1150,7 +1150,8 @@ body::-webkit-scrollbar-button,
 
 @media (min-width: 768px) {
   .recent-slideshow,
-  .home-promo-image {
+  .home-promo-image,
+  .taxon-filter-promo-image {
     max-width: 680px;
     margin-left: auto;
     margin-right: auto;
