@@ -275,10 +275,17 @@ initialize().catch((error) => {
 
 function dedupeTaxonFilterCards() {
   const cards = document.querySelectorAll("#taxonFilterCard");
-  if (cards.length <= 1) return;
-  cards.forEach((card, index) => {
-    if (index > 0) card.remove();
-  });
+  if (cards.length > 1) {
+    cards.forEach((card, index) => {
+      if (index > 0) card.remove();
+    });
+  }
+
+  if (dom.homePromoCard) {
+    dom.homePromoCard
+      .querySelectorAll("#taxonFilterCard, .taxon-filter-promo, .taxon-filter-promo-image, .taxon-filter-promo-button, img[src*='taxon-filter']")
+      .forEach((node) => node.remove());
+  }
 }
 
 
