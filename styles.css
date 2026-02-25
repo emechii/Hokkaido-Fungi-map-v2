@@ -1020,6 +1020,13 @@ body::-webkit-scrollbar-button,
   text-align: center;
 }
 
+
+.taxon-filter-card {
+  margin-top: 10px;
+  padding: 8px;
+  text-align: center;
+}
+
 .taxon-filter-promo {
   margin-top: 10px;
 }
