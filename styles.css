@@ -645,6 +645,7 @@ body {
 }
 
 #hokkaidoMap {
+  display: block;
   width: 100%;
   height: auto;
 }
