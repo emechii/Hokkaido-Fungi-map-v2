@@ -23,14 +23,16 @@
         class="site-corner-logo"
         loading="eager"
         decoding="async"
-      />
+        />
       <img
         src="./assets/img/Hokkaidofungi-list.png"
         alt="北海道菌類リスト"
         class="site-title-image"
         loading="eager"
         decoding="async"
+        onerror="this.style.display='none';var t=document.getElementById('siteTitleFallback');if(t)t.classList.remove('hidden');"
       />
+      <h1 id="siteTitleFallback" class="site-title-fallback hidden">北海道菌類リスト</h1>
     </header>
 
     <main class="layout">
@@ -48,6 +50,7 @@
             <div class="toggle-buttons">
               <button id="jpSortBtn" class="toggle-button active">和名</button>
               <button id="scientificSortBtn" class="toggle-button">学名</button>
+              <button id="restoreSpeciesListBtn" class="toggle-button restore-species-button hidden" type="button">通常のリストを戻す</button>
             </div>
             <div class="quality-filter">
               <p class="quality-label">研究データのみ</p>
@@ -117,7 +120,7 @@
             <div><span>最終更新:</span> <strong id="metaUpdated">-</strong></div>
           </section>
 
-          <section>
+          <section class="distribution-section">
             <h3>道内分布図</h3>
             <div class="map-filter-buttons">
               <button id="mapShowAllBtn" class="toggle-button map-filter-button active" type="button">全記録表示</button>
