@@ -32,7 +32,7 @@ body {
   position: relative;
   border-bottom: 1px solid var(--line);
   text-align: center;
-  padding: 0 0.75rem;
+  padding: 0 0.75rem 10px;
 }
 
 .site-title-image {
@@ -40,6 +40,13 @@ body {
   width: min(620px, 78vw);
   height: auto;
   margin: 0 auto;
+}
+
+.site-title-fallback {
+  margin: 8px 0;
+  font-size: 1.4rem;
+  letter-spacing: 0.06em;
+  color: var(--text);
 }
 
 .site-header h1 {
@@ -276,6 +283,10 @@ body {
   margin-top: 2px;
 }
 
+.restore-species-button {
+  margin-left: 10px;
+}
+
 .second-row {
   margin-bottom: 14px;
 }
@@ -486,6 +497,12 @@ body {
   margin: 0 auto;
 }
 
+.photo-grid-fallback-image {
+  display: block;
+  width: min(680px, 100%);
+  margin: 0 auto;
+}
+
 .thumb-card {
   min-width: 0;
 }
@@ -628,6 +645,7 @@ body {
 }
 
 #hokkaidoMap {
+  display: block;
   width: 100%;
   height: auto;
 }
@@ -686,11 +704,6 @@ body {
   .site-title-image {
     width: min(72vw, 460px);
     margin-top: 0;
-  }
-
-  .promo-discord-button {
-    padding: 0.11rem 0.25rem;
-    font-size: 0.31rem;
   }
 
 
@@ -796,6 +809,10 @@ body {
     font-size: 0.58rem;
   }
 
+  .restore-species-button {
+    margin-left: 8px;
+  }
+
   .quality-label {
     font-size: 0.42rem;
   }
@@ -848,6 +865,7 @@ body {
   }
 
   .seasonality-section h3,
+  .distribution-section h3,
   .meta-grid,
   .distribution-summary,
   .obs-link-button,
@@ -898,6 +916,8 @@ body {
 }
 
 
+html,
+body,
 .species-list,
 .content,
 .species-search-dropdown {
@@ -905,6 +925,8 @@ body {
   scrollbar-color: #39b268 #0b1a12;
 }
 
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
 .species-list::-webkit-scrollbar,
 .content::-webkit-scrollbar,
 .species-search-dropdown::-webkit-scrollbar {
@@ -912,6 +934,8 @@ body {
   height: 12px;
 }
 
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
 .species-list::-webkit-scrollbar-track,
 .content::-webkit-scrollbar-track,
 .species-search-dropdown::-webkit-scrollbar-track {
@@ -919,6 +943,8 @@ body {
   border: 1px solid #1f7a3f;
 }
 
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
 .species-list::-webkit-scrollbar-thumb,
 .content::-webkit-scrollbar-thumb,
 .species-search-dropdown::-webkit-scrollbar-thumb {
@@ -926,6 +952,8 @@ body {
   border: 2px solid #0b1a12;
 }
 
+html::-webkit-scrollbar-button,
+body::-webkit-scrollbar-button,
 .species-list::-webkit-scrollbar-button,
 .content::-webkit-scrollbar-button,
 .species-search-dropdown::-webkit-scrollbar-button {
@@ -992,8 +1020,43 @@ body {
   text-align: center;
 }
 
+
+.taxon-filter-card {
+  margin-top: 10px;
+  padding: 8px;
+  text-align: center;
+}
+
+.taxon-filter-promo {
+  margin-top: 10px;
+}
+
+.taxon-filter-promo-image {
+  display: block;
+  width: 94%;
+  margin: 0 auto;
+  height: auto;
+}
+
+.taxon-filter-promo-button {
+  display: inline-block;
+  margin: 8px auto 2px;
+  padding: 0.33rem 0.75rem;
+  border: 1px solid var(--line-soft);
+  color: var(--muted);
+  background: #0b1a12;
+  font-size: 0.93rem;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
 @media (max-width: 760px) {
   .promo-discord-button {
+    padding: 0.11rem 0.25rem;
+    font-size: 0.31rem;
+  }
+
+  .taxon-filter-promo-button {
     padding: 0.11rem 0.25rem;
     font-size: 0.31rem;
   }
@@ -1081,5 +1144,15 @@ body {
     font-size: 0.3rem;
     padding: 0.1rem 0.2rem;
     row-gap: 0;
+  }
+}
+
+
+@media (min-width: 768px) {
+  .recent-slideshow,
+  .home-promo-image {
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
