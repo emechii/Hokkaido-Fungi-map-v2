@@ -272,8 +272,17 @@ initialize().catch((error) => {
   setStatus("データ取得に失敗しました。時間をおいて再読み込みしてください。");
 });
 
+function dedupeTaxonFilterCards() {
+  const cards = document.querySelectorAll("#taxonFilterCard");
+  if (cards.length <= 1) return;
+  cards.forEach((card, index) => {
+    if (index > 0) card.remove();
+  });
+}
+
 
 async function initialize() {
+  dedupeTaxonFilterCards();
   wireEvents();
   dom.detailCard?.classList.add("hidden");
   dom.recentObsCard?.classList.remove("hidden");
