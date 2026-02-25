@@ -8,21 +8,23 @@
   </head>
   <body>
     <img
-      src="./assets/img/MHFUNGILOGOlimegreen.png"
+      src="./assets/img/MH-FUNGI-LOGO-outline-green-fade.png"
       alt="MH FUNGI Logo"
       id="siteCornerLogo"
       class="site-corner-logo"
       loading="eager"
       decoding="async"
+      onerror="this.onerror=null;this.src='./assets/img/MHFUNGILOGOlimegreen.png';"
     />
     <header class="site-header">
       <img
-        src="./assets/img/MHFUNGILOGOlimegreen.png"
+        src="./assets/img/MH-FUNGI-LOGO-outline-green-fade.png"
         alt="MH FUNGI Logo"
         id="siteCornerLogo"
         class="site-corner-logo"
         loading="eager"
         decoding="async"
+        onerror="this.onerror=null;this.src='./assets/img/MHFUNGILOGOlimegreen.png';"
       />
       <img
         src="./assets/img/Hokkaidofungi-list.png"
@@ -30,7 +32,9 @@
         class="site-title-image"
         loading="eager"
         decoding="async"
+        onerror="this.style.display='none';var t=document.getElementById('siteTitleFallback');if(t)t.classList.remove('hidden');"
       />
+      <h1 id="siteTitleFallback" class="site-title-fallback hidden">北海道菌類リスト</h1>
     </header>
 
     <main class="layout">
@@ -48,6 +52,7 @@
             <div class="toggle-buttons">
               <button id="jpSortBtn" class="toggle-button active">和名</button>
               <button id="scientificSortBtn" class="toggle-button">学名</button>
+              <button id="restoreSpeciesListBtn" class="toggle-button restore-species-button hidden" type="button">通常のリストを戻す</button>
             </div>
             <div class="quality-filter">
               <p class="quality-label">研究データのみ</p>
@@ -91,6 +96,20 @@
           >Discordサーバー</a>
         </article>
 
+        <article id="taxonFilterCard" class="panel taxon-filter-card" aria-live="polite">
+          <section class="taxon-filter-promo" aria-label="分類フィルター案内">
+            <img
+              src="./assets/img/taxon-filter.png"
+              alt="分類フィルター（準備中）"
+              class="taxon-filter-promo-image"
+              onerror="this.style.display='none'"
+              loading="lazy"
+              decoding="async"
+            />
+            <button class="taxon-filter-promo-button" type="button" disabled aria-disabled="true">準備中</button>
+          </section>
+        </article>
+
         <article id="detailCard" class="panel detail hidden" aria-live="polite">
           <p id="detailLineage" class="detail-lineage">-</p>
           <h2 id="detailSciName" class="sci-name">-</h2>
@@ -117,7 +136,7 @@
             <div><span>最終更新:</span> <strong id="metaUpdated">-</strong></div>
           </section>
 
-          <section>
+          <section class="distribution-section">
             <h3>道内分布図</h3>
             <div class="map-filter-buttons">
               <button id="mapShowAllBtn" class="toggle-button map-filter-button active" type="button">全記録表示</button>
